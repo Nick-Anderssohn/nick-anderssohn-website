@@ -1,4 +1,4 @@
-package com.nickanderssohn.client;
+package com.nickanderssohn.fullshare;
 
 import android.os.Bundle;
 

@@ -1,4 +1,4 @@
-name: client
+name: full_share
 description: A cross-platform application for sharing full resolution photos.
 
 dependencies:

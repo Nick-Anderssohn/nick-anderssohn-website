@@ -1,6 +1,6 @@
-# client
+# full_share
 
-A cross platform app for sharing full resolution photos and videos
+A cross platform app for sharing full resolution photos and videos.
 
 ## Getting Started
 
