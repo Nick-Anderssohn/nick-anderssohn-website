@@ -1,9 +1,42 @@
 package codegen
 
+const defaultCodeLen = 4
+
 type Generator struct {
 	availableCodes []string
 	codeLen int
-	availableCharacters []string
+	availableCharacters []rune
+}
+
+func NewDefaultGenerator() *Generator {
+	g := &Generator{
+		availableCharacters: createAZaz09Slice(),
+		codeLen: defaultCodeLen,
+	}
+	g.instantiateCodes()
+	return g
+}
+
+func (g *Generator) instantiateCodes() {
+	codeMap := map[string]bool{}
+	curCombo := make([]rune, g.codeLen)
+	permuteAllCombinations(g.availableCharacters, curCombo, 0, g.codeLen, codeMap)
+	g.availableCodes = getKeys(codeMap)
+}
+
+func createAZaz09Slice() (chars []rune) {
+	chars = appendRangeOfChars(chars, 'A', 'Z')
+	chars = appendRangeOfChars(chars, 'a', 'z')
+	chars = appendRangeOfChars(chars, '0', '9')
+
+	return
+}
+
+func appendRangeOfChars(chars []rune, startChar, endChar rune) []rune{
+	for c := startChar; c <= endChar; c++ {
+		chars = append(chars, c)
+	}
+	return chars
 }
 
 func getKeys(m map[string]bool) []string {

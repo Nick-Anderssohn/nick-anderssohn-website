@@ -20,3 +20,7 @@ func Test_permuteAllCombinations(_ *testing.T) {
 	permuteAllCombinations(allChars, curCombo, 0, comboSize, permutationMap)
 	fmt.Println(getKeys(permutationMap))
 }
+
+func Test_defaultChars(_ *testing.T) {
+	fmt.Println(string(createAZaz09Slice()))
+}
