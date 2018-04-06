@@ -1,8 +1,9 @@
 package codegen
 
 import (
-	"math/rand"
 	"math"
+	"math/rand"
+
 	"gopkg.in/cheggaaa/pb.v2"
 )
 
@@ -53,23 +54,23 @@ func createAZ09Slice() (chars []rune) {
 	return
 }
 
-func appendRangeOfChars(chars []rune, startChar, endChar rune) []rune{
+func appendRangeOfChars(chars []rune, startChar, endChar rune) []rune {
 	for c := startChar; c <= endChar; c++ {
 		chars = append(chars, c)
 	}
 	return chars
 }
 
-func genCodes(allChars []rune, codeLen int) [][]rune{
+func genCodes(allChars []rune, codeLen int) [][]rune {
 	allCodes := make([][]rune, int(math.Pow(float64(len(allChars)), float64(codeLen))))
 	for i := 0; i < len(allCodes); i++ {
 		allCodes[i] = make([]rune, codeLen)
 	}
 	for i := 0; i < codeLen; i++ {
 		for codeIndex := 0; codeIndex < len(allCodes); codeIndex++ {
-			allCodes[codeIndex][i] = allChars[(codeIndex / (i+1)) % len(allChars)]
+			allCodes[codeIndex][i] = allChars[(codeIndex/(i+1))%len(allChars)]
 			genCount++
-			if genCount % 4 == 0 {
+			if genCount%4 == 0 {
 				progressBar.Increment()
 			}
 		}
