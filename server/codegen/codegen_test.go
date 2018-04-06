@@ -5,22 +5,15 @@ import (
 	"fmt"
 )
 
-func Test_permute(_ *testing.T) {
-	str := "abc"
-	permutationMap := map[string]bool{}
-	permute(permutationMap, str, 0, len(str) - 1)
-	fmt.Println(getKeys(permutationMap))
-}
-
-func Test_permuteAllCombinations(_ *testing.T) {
-	comboSize := 2
-	allChars := []rune{'a', 'b', 'c', 'd'}
-	curCombo := make([]rune, comboSize)
-	permutationMap := map[string]bool{}
-	permuteAllCombinations(allChars, curCombo, 0, comboSize, permutationMap)
-	fmt.Println(getKeys(permutationMap))
-}
-
 func Test_defaultChars(_ *testing.T) {
-	fmt.Println(string(createAZaz09Slice()))
+	fmt.Println(string(createAZ09Slice()))
+}
+
+func Test_alternateBuilder(_ *testing.T) {
+	allChars := []rune{'a', 'b', 'c', 'd'}
+	codes := genCodes(allChars, 3)
+	for _, code := range codes {
+		fmt.Println(string(code))
+	}
+	fmt.Println("num codes:", len(codes))
 }

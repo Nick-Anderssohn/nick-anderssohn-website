@@ -1,32 +1,53 @@
 package codegen
 
+import (
+	"math/rand"
+	"math"
+	"gopkg.in/cheggaaa/pb.v2"
+)
+
 const defaultCodeLen = 4
 
+var totalToGen int64
+var genCount int64
+var progressBar *pb.ProgressBar
+
 type Generator struct {
-	availableCodes []string
-	codeLen int
-	availableCharacters []rune
+	availableCodes [][]rune
+	codeLen        int
+	allChars       []rune
 }
 
 func NewDefaultGenerator() *Generator {
 	g := &Generator{
-		availableCharacters: createAZaz09Slice(),
-		codeLen: defaultCodeLen,
+		allChars: createAZ09Slice(),
+		codeLen:  defaultCodeLen,
 	}
 	g.instantiateCodes()
 	return g
 }
 
 func (g *Generator) instantiateCodes() {
-	codeMap := map[string]bool{}
-	curCombo := make([]rune, g.codeLen)
-	permuteAllCombinations(g.availableCharacters, curCombo, 0, g.codeLen, codeMap)
-	g.availableCodes = getKeys(codeMap)
+	totalToGen = int64(math.Pow(float64(len(g.allChars)), float64(g.codeLen)))
+	genCount = 0
+	progressBar = pb.StartNew(int(totalToGen))
+	g.availableCodes = genCodes(g.allChars, g.codeLen)
+	progressBar.Finish()
 }
 
-func createAZaz09Slice() (chars []rune) {
+func (g *Generator) GetCode() string {
+	i := rand.Intn(len(g.availableCodes))
+	code := g.availableCodes[i]
+	g.availableCodes = append(g.availableCodes[:i], g.availableCodes[i+1:]...)
+	return string(code)
+}
+
+func (g *Generator) RestoreCode(code string) {
+	g.availableCodes = append(g.availableCodes, []rune(code))
+}
+
+func createAZ09Slice() (chars []rune) {
 	chars = appendRangeOfChars(chars, 'A', 'Z')
-	chars = appendRangeOfChars(chars, 'a', 'z')
 	chars = appendRangeOfChars(chars, '0', '9')
 
 	return
@@ -39,49 +60,19 @@ func appendRangeOfChars(chars []rune, startChar, endChar rune) []rune{
 	return chars
 }
 
-func getKeys(m map[string]bool) []string {
-	keys := make([]string, 0, len(m))
-
-	for k := range m {
-		keys = append(keys, k)
+func genCodes(allChars []rune, codeLen int) [][]rune{
+	allCodes := make([][]rune, int(math.Pow(float64(len(allChars)), float64(codeLen))))
+	for i := 0; i < len(allCodes); i++ {
+		allCodes[i] = make([]rune, codeLen)
 	}
-
-	return keys
-}
-
-// len of curCombo must equal comboSize
-func permuteAllCombinations(allChars, curCombo []rune, index, comboSize int, permutationMap map[string]bool) {
-	if len(curCombo) != comboSize {
-		return
-	}
-
-	// if a combo is reached, get all permutations for that combo
-	if index == comboSize {
-		permute(permutationMap, string(curCombo), 0, len(curCombo) - 1)
-		return
-	}
-
-	for i := 0; i <= len(allChars)-1 && len(allChars)-i >= comboSize-index; i++ {
-		curCombo[index] = allChars[i]
-		permuteAllCombinations(allChars[1:], curCombo, index+1, comboSize, permutationMap)
-	}
-}
-
-// Does NOT store duplicates
-func permute(permutationMap map[string]bool, curPermutation string, startIndex, endIndex int) {
-	if startIndex == endIndex {
-			permutationMap[curPermutation] = true
-	} else {
-		for i := startIndex; i <= endIndex; i++ {
-			curPermutation = swap(curPermutation, i, startIndex)
-			permute(permutationMap, curPermutation, startIndex+1, endIndex)
-			curPermutation = swap(curPermutation, i, startIndex)
+	for i := 0; i < codeLen; i++ {
+		for codeIndex := 0; codeIndex < len(allCodes); codeIndex++ {
+			allCodes[codeIndex][i] = allChars[(codeIndex / (i+1)) % len(allChars)]
+			genCount++
+			if genCount % 4 == 0 {
+				progressBar.Increment()
+			}
 		}
 	}
-}
-
-func swap(str string, i1, i2 int) string {
-	chars := []rune(str)
-	chars[i1], chars[i2] = chars[i2], chars[i1]
-	return string(chars)
+	return allCodes
 }
