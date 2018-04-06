@@ -14,15 +14,19 @@ var genCount int64
 var progressBar *pb.ProgressBar
 
 type Generator struct {
-	availableCodes [][]rune
-	codeLen        int
-	allChars       []rune
+	availableCodes  [][]rune
+	codeLen         int
+	allChars        []rune
+	RequestCodeChan chan bool
+	CodeChan        chan string
 }
 
 func NewDefaultGenerator() *Generator {
 	g := &Generator{
-		allChars: createAZ09Slice(),
-		codeLen:  defaultCodeLen,
+		allChars:        createAZ09Slice(),
+		codeLen:         defaultCodeLen,
+		RequestCodeChan: make(chan bool),
+		CodeChan:        make(chan string),
 	}
 	g.instantiateCodes()
 	return g
@@ -45,6 +49,13 @@ func (g *Generator) GetCode() string {
 
 func (g *Generator) RestoreCode(code string) {
 	g.availableCodes = append(g.availableCodes, []rune(code))
+}
+
+func (g *Generator) RunAndWaitForCodeRequests() {
+	for {
+		<-g.RequestCodeChan
+		g.CodeChan <- g.GetCode()
+	}
 }
 
 func createAZ09Slice() (chars []rune) {
