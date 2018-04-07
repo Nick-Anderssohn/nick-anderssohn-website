@@ -9,7 +9,7 @@ import (
 var imageFileServer http.Handler
 
 func init() {
-	imageFileServer = http.FileServer(http.Dir("/data"))
+	imageFileServer = http.StripPrefix(api.FullShareBase+"/data/", http.FileServer(http.Dir("data")))
 }
 
 type Server struct {
@@ -25,7 +25,7 @@ func NewServer(address, port string) *Server {
 func getEndpoints() []*rest.Endpoint {
 	endpoints := []*rest.Endpoint{
 		{
-			Path:       api.FullShareBase + "/data",
+			Path:       api.FullShareBase + "/data/",
 			HandleFunc: imageFileServer.ServeHTTP,
 		},
 	}
