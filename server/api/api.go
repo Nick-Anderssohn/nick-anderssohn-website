@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"full-share/server/codegen"
+	"full-share/server/db"
 	"full-share/server/file"
 	"full-share/server/rest"
 	"log"
@@ -23,7 +24,9 @@ func init() {
 }
 
 type SaveFileReq struct {
-	Data []byte `json:"data"`
+	Data            []byte `json:"data"`
+	IsCompressed    bool   `json:"is_compressed"`
+	CompressionType string `json:"compression_type"`
 }
 
 type SaveFileResp struct {
@@ -35,23 +38,27 @@ type SaveFileResp struct {
 func SaveFile(writer http.ResponseWriter, req *http.Request) {
 	var saveFileReq SaveFileReq
 	var resp SaveFileResp
-
-	fmt.Println("In save file handler")
+	var err error
 
 	defer sendJson(writer, &resp)
 
-	if err := json.NewDecoder(req.Body).Decode(&saveFileReq); err != nil {
+	if err = json.NewDecoder(req.Body).Decode(&saveFileReq); err != nil {
 		log.Println(err.Error())
 		resp.Message = "Bad request format."
 		return
 	}
 
-	var success bool
-	var code string
+	var success, alreadyExists bool
+	var code, path string
 	for !success {
-		success = true
-		code = atomicGetCode()
-		if alreadyExists, err := file.SaveFile(code, saveFileReq.Data); err != nil || alreadyExists {
+		for !success {
+			success = true
+			code = atomicGetCode()
+			if db.FileInfoExists(code) {
+				success = false
+			}
+		}
+		if alreadyExists, path, err = file.SaveFile(code, saveFileReq.Data); err != nil || alreadyExists {
 			if alreadyExists {
 				log.Println("Code already in use: ", code)
 				success = false
@@ -65,6 +72,8 @@ func SaveFile(writer http.ResponseWriter, req *http.Request) {
 			}
 		}
 	}
+
+	db.InsertNewFileInfo(code, saveFileReq.CompressionType, path, saveFileReq.IsCompressed)
 
 	resp.Success = true
 	resp.Code = code
