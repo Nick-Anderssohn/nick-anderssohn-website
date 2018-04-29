@@ -4,17 +4,18 @@ import (
 	"math"
 	"math/rand"
 
+	"fmt"
+
 	"gopkg.in/cheggaaa/pb.v2"
 )
 
 const defaultCodeLen = 4
 
 var totalToGen int64
-var genCount int64
 var progressBar *pb.ProgressBar
 
 type Generator struct {
-	availableCodes  [][]rune
+	availableCodes  []string
 	codeLen         int
 	allChars        []rune
 	RequestCodeChan chan bool
@@ -34,7 +35,6 @@ func NewDefaultGenerator() *Generator {
 
 func (g *Generator) instantiateCodes() {
 	totalToGen = int64(math.Pow(float64(len(g.allChars)), float64(g.codeLen)))
-	genCount = 0
 	progressBar = pb.StartNew(int(totalToGen))
 	g.availableCodes = genCodes(g.allChars, g.codeLen)
 	progressBar.Finish()
@@ -42,13 +42,14 @@ func (g *Generator) instantiateCodes() {
 
 func (g *Generator) GetCode() string {
 	i := rand.Intn(len(g.availableCodes))
+	fmt.Println("random index: ", i)
 	code := g.availableCodes[i]
 	g.availableCodes = append(g.availableCodes[:i], g.availableCodes[i+1:]...)
-	return string(code)
+	return code
 }
 
 func (g *Generator) RestoreCode(code string) {
-	g.availableCodes = append(g.availableCodes, []rune(code))
+	g.availableCodes = append(g.availableCodes, code)
 }
 
 func (g *Generator) RunAndWaitForCodeRequests() {
@@ -72,19 +73,23 @@ func appendRangeOfChars(chars []rune, startChar, endChar rune) []rune {
 	return chars
 }
 
-func genCodes(allChars []rune, codeLen int) [][]rune {
-	allCodes := make([][]rune, int(math.Pow(float64(len(allChars)), float64(codeLen))))
-	for i := 0; i < len(allCodes); i++ {
-		allCodes[i] = make([]rune, codeLen)
-	}
-	for i := 0; i < codeLen; i++ {
-		for codeIndex := 0; codeIndex < len(allCodes); codeIndex++ {
-			allCodes[codeIndex][i] = allChars[(codeIndex/(i+1))%len(allChars)]
-			genCount++
-			if genCount%4 == 0 {
-				progressBar.Increment()
-			}
-		}
-	}
+func genCodes(allChars []rune, codeLen int) []string {
+	var allCodes []string
+	genCodesR(allChars, "", codeLen, &allCodes)
 	return allCodes
+}
+
+func genCodesR(allChars []rune, curCode string, k int, storage *[]string) {
+	if k == 0 {
+		*storage = append(*storage, curCode)
+		if progressBar != nil {
+			progressBar.Increment()
+		}
+		return
+	}
+
+	for _, c := range allChars {
+		newCode := curCode + string(c)
+		genCodesR(allChars, newCode, k-1, storage)
+	}
 }

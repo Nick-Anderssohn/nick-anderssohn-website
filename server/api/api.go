@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"full-share/server/codegen"
-	"full-share/server/rest"
 	"full-share/server/file"
+	"full-share/server/rest"
 	"log"
 	"net/http"
 )
@@ -36,6 +36,8 @@ func SaveFile(writer http.ResponseWriter, req *http.Request) {
 	var saveFileReq SaveFileReq
 	var resp SaveFileResp
 
+	fmt.Println("In save file handler")
+
 	defer sendJson(writer, &resp)
 
 	if err := json.NewDecoder(req.Body).Decode(&saveFileReq); err != nil {
@@ -44,14 +46,24 @@ func SaveFile(writer http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	code := atomicGetCode()
-	if alreadyExists, err := file.SaveFile(code, saveFileReq.Data); err != nil || alreadyExists {
-		log.Println(err.Error())
-		resp.Message = "Could not save file."
-		if !alreadyExists {
-			generator.RestoreCode(code)
+	var success bool
+	var code string
+	for !success {
+		success = true
+		code = atomicGetCode()
+		if alreadyExists, err := file.SaveFile(code, saveFileReq.Data); err != nil || alreadyExists {
+			if alreadyExists {
+				log.Println("Code already in use: ", code)
+				success = false
+			} else {
+				log.Println(err.Error())
+				resp.Message = "Could not save file."
+				if !alreadyExists {
+					generator.RestoreCode(code)
+				}
+				return
+			}
 		}
-		return
 	}
 
 	resp.Success = true
