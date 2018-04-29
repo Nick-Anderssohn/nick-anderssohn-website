@@ -4,8 +4,6 @@ import (
 	"math"
 	"math/rand"
 
-	"fmt"
-
 	"gopkg.in/cheggaaa/pb.v2"
 )
 
@@ -42,7 +40,6 @@ func (g *Generator) instantiateCodes() {
 
 func (g *Generator) GetCode() string {
 	i := rand.Intn(len(g.availableCodes))
-	fmt.Println("random index: ", i)
 	code := g.availableCodes[i]
 	g.availableCodes = append(g.availableCodes[:i], g.availableCodes[i+1:]...)
 	return code

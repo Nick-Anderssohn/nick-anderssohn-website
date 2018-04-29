@@ -7,8 +7,10 @@ import (
 	"full-share/server/db"
 	"full-share/server/file"
 	"full-share/server/rest"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 )
 
 const (
@@ -35,6 +37,10 @@ type SaveFileResp struct {
 	Code    string `json:"code"`
 }
 
+func strToBool(str string) bool {
+	return strings.ToLower(str) == "true"
+}
+
 func SaveFile(writer http.ResponseWriter, req *http.Request) {
 	var saveFileReq SaveFileReq
 	var resp SaveFileResp
@@ -42,9 +48,13 @@ func SaveFile(writer http.ResponseWriter, req *http.Request) {
 
 	defer sendJson(writer, &resp)
 
-	if err = json.NewDecoder(req.Body).Decode(&saveFileReq); err != nil {
+	saveFileReq.IsCompressed = strToBool(req.Header.Get("is_compressed"))
+	saveFileReq.CompressionType = req.Header.Get("compression_type")
+	saveFileReq.Data, err = ioutil.ReadAll(req.Body)
+
+	if err != nil {
 		log.Println(err.Error())
-		resp.Message = "Bad request format."
+		resp.Message = "Could not read request body."
 		return
 	}
 
