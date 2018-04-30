@@ -106,6 +106,7 @@ func SaveFile(writer http.ResponseWriter, req *http.Request) {
 
 func DownloadFile(writer http.ResponseWriter, req *http.Request) {
 	code := req.Header.Get("Code")
+	code = strings.ToUpper(code)
 
 	if code == "" {
 		writer.Header().Set("Success", "false")
