@@ -21,3 +21,7 @@ func SaveFile(code string, data []byte) (fileAlreadyExists bool, filePath string
 	}
 	return
 }
+
+func GetFile(path string) ([]byte, error) {
+	return ioutil.ReadFile(path)
+}

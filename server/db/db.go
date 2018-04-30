@@ -21,6 +21,7 @@ type FileInfo struct {
 	IsCompressed    bool
 	CompressionType string
 	Path            string
+	FileSize        int
 }
 
 const (
@@ -29,17 +30,22 @@ CREATE TABLE IF NOT EXISTS files(
   code VARCHAR(6) PRIMARY KEY,
   isCompressed BOOLEAN DEFAULT FALSE,
   compressionType VARCHAR(15) DEFAULT '',
-  path VARCHAR(50) NOT NULL
+  path VARCHAR(50) NOT NULL,
+  fileSize INTEGER DEFAULT 0
 );
 `
 
 	insertIntoFilesTableSQL = `
 INSERT INTO files
-VALUES ($1, $2, $3, $4);
+VALUES ($1, $2, $3, $4, $5);
 `
 
 	selectFileInfoSql = `
 SELECT * FROM files WHERE code = $1;
+`
+
+	countFileWithCode = `
+SELECT COUNT(*) FROM files WHERE code = $1;
 `
 )
 
@@ -65,8 +71,8 @@ func CreateTablesIfNotExists() {
 	}
 }
 
-func InsertNewFileInfo(code, compressionType, path string, isCompressed bool) (err error) {
-	if _, err = conn.Exec(insertIntoFilesTableSQL, code, isCompressed, compressionType, path); err != nil {
+func InsertNewFileInfo(code, compressionType, path string, isCompressed bool, fileSize int) (err error) {
+	if _, err = conn.Exec(insertIntoFilesTableSQL, code, isCompressed, compressionType, path, fileSize); err != nil {
 		log.Println(err.Error())
 	}
 	return
@@ -75,19 +81,7 @@ func InsertNewFileInfo(code, compressionType, path string, isCompressed bool) (e
 func SelectFileInfo(code string) *FileInfo {
 	var fileInfo FileInfo
 	row := conn.QueryRow(selectFileInfoSql, code)
-	if err := row.Scan(&fileInfo.Code); err != nil {
-		log.Println(err.Error())
-		return nil
-	}
-	if err := row.Scan(&fileInfo.IsCompressed); err != nil {
-		log.Println(err.Error())
-		return nil
-	}
-	if err := row.Scan(&fileInfo.CompressionType); err != nil {
-		log.Println(err.Error())
-		return nil
-	}
-	if err := row.Scan(&fileInfo.Path); err != nil {
+	if err := row.Scan(&fileInfo.Code, &fileInfo.IsCompressed, &fileInfo.CompressionType, &fileInfo.Path, &fileInfo.FileSize); err != nil {
 		log.Println(err.Error())
 		return nil
 	}
@@ -95,7 +89,7 @@ func SelectFileInfo(code string) *FileInfo {
 }
 
 func FileInfoExists(code string) bool {
-	var dontCare string
-	err := conn.QueryRow(selectFileInfoSql, code).Scan(dontCare)
-	return err != sql.ErrNoRows
+	var count int
+	conn.QueryRow(countFileWithCode, code).Scan(&count)
+	return count >= 1
 }
