@@ -1,7 +1,7 @@
 part of upload;
 
-class PageModel {
+class AlbumPageModel {
+  String albumTitle;
   int nextID = 0;
-//  List<CardModel> cardModels = [];
   Map<int, CardModel> cardModels = {};
 }

@@ -1,10 +1,11 @@
 part of upload;
 
-class Page extends material.StatelessWidget {
+class AlbumPage extends material.StatelessWidget {
   final IDCallback removeCardCallback;
   final AlbumPageModel model;
+  final bool showNewAlbumUI;
 
-  Page(this.model, this.removeCardCallback);
+  AlbumPage(this.model, this.removeCardCallback, this.showNewAlbumUI);
 
   @override
   material.Widget build(material.BuildContext context) {
@@ -15,14 +16,23 @@ class Page extends material.StatelessWidget {
 //            ))
 //        .toList();
 
-    List listChildren = model.cardModels.values
-        .toList()
-        .map((cardModel) => new AlbumCard(
-              cardModel.cardID,
-              removeBtnClickedCallback: removeCardCallback,
-            ))
-        .toList();
-    listChildren.sort((c1, c2) => c1.id < c2.id ? 1 : -1);
+    if (showNewAlbumUI) {
+      return new material.Center(
+        child: new material.Text('CHICKEN'),
+      );
+    }
+
+    List listChildren = model.cardModels.values.toList().map((cardModel) {
+      material.Widget val = new ImageCard(
+        cardModel.cardID,
+        removeBtnClickedCallback: removeCardCallback,
+        imageFile: cardModel.imageFile,
+      );
+      return val;
+    }).toList();
+
+    // At this point, the only values should be of type AlbumCard
+    listChildren.sort((c1, c2) => (c1 as ImageCard).id < (c2 as ImageCard).id ? 1 : -1);
 
     // add space so that you can scroll past end a bit
     listChildren.add(new material.Container(

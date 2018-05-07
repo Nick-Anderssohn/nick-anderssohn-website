@@ -1,10 +1,9 @@
 part of upload;
 
-class CardModel {
+class AlbumModel {
   int cardID;
   String code;
   String expiresDateTime;
-  io.File imageFile;
 
-  CardModel(this.cardID);
+  AlbumModel(this.cardID);
 }
