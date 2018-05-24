@@ -1,0 +1,169 @@
+.page-selector-container {
+  position: absolute;
+}
+
+$state-city-container-height: 50px;
+
+.app-container {
+  padding: 0;
+  min-width: 906px;
+}
+
+.milestone3-container {
+  background-color: $translucent-crystal-blue;
+  width: 100%;
+  box-sizing: border-box;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-bottom: 20px;
+  border: $darkslategray-thin-border;
+}
+
+.row-container {
+  width: 100%;
+  margin-top: 20px;
+}
+
+.milestone3-table-container {
+  @extend .table-container;
+  height: 400px;
+  margin-bottom: 20px;
+  margin-top: 20px;
+}
+
+.rev-table {
+  @extend .milestone3-table-container;
+}
+
+.milestone3-label {
+  color: $darkslategray-font;
+  font-family: $main-font-family;
+}
+
+.block-label {
+  @extend .milestone3-label;
+  display: inline-block;
+  margin-right: 5px
+}
+
+.no-select {
+  -webkit-user-select: none;  /* Chrome all / Safari all */
+  -moz-user-select: none;     /* Firefox all */
+  -ms-user-select: none;      /* IE 10+ */
+  user-select: none;          /* Likely future */
+}
+
+.milestone3-title {
+  font-size: 20px;
+  font-family: $main-font-family;
+  text-align: center;
+}
+
+.milestone3-title-container {
+  width: 100%;
+}
+
+.col-width-third {
+  width: calc((100% - 40px) / 3);
+  display: inline-block;
+  margin-right: 20px;
+}
+
+.col-last-third {
+  @extend .col-width-third;
+  // Yes. It hurt me to write this. It should be zero, but it needs to be -1 to fix a bug with microsoft edge.
+  // A better solution would be to travel back in time and prevent microsoft from creating that abomination of a browser.
+  margin-right: -1px;
+}
+
+.list-header {
+  @extend .milestone3-label;
+  text-align: center;
+}
+
+.milestone3-list {
+  height: 300px;
+  background-color: $snow;
+  overflow-y: scroll;
+  box-sizing: border-box;
+}
+
+.milestone3-list-container {
+  border: $darkslategray-thin-border;
+}
+
+.inline-block {
+  display: inline-block;
+}
+
+.filter-by-open-label {
+  padding-right: 15px;
+}
+
+.spacer15 {
+  width: 15px;
+  display: inline-block;
+}
+
+.spacer7 {
+  width: 7px;
+  display: inline-block;
+}
+
+.float-right {
+  float: right;
+}
+
+.review-biz-form {
+  //width: 700px;
+}
+
+.review-biz-textarea {
+  width: 650px;
+  height: 200px;
+  resize: none;
+  overflow-y: scroll;
+}
+
+.std-col {
+  display: inline-block;
+  vertical-align: top;
+}
+
+.rate-row {
+  margin-top: 7px;
+}
+
+.shield {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  background-color: rgba(0,0,0,0.1);
+}
+
+.middle {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 100%;
+  text-align: center;
+  padding: 1px;
+}
+
+.std-border {
+  border: $darkslategray-thin-border;
+}
+
+.chart-container {
+  border: $darkslategray-thin-border;
+  padding: 10px;
+  background-color: white;
+}
+
+.body {
+  margin: 0;
+  padding: 0;
+}

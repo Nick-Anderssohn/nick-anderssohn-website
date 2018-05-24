@@ -1,0 +1,36 @@
+
+.table-container {
+  background-color: $dark-silver-snow;
+  overflow-y: scroll;
+  border: $darkslategray-thin-border;
+  box-sizing: border-box;
+}
+
+.std-table {
+  font-family: $main-font-family;
+  font-size: 15px;
+  color: $darkslategray-font;
+  border-collapse: collapse;
+  width: 100%;
+
+  th {
+    border: 1px solid $silver-snow;
+    text-align: left;
+    padding: 8px;
+    background-color: $snow;
+  }
+
+  td {
+    border: 1px solid $silver-snow;
+    text-align: left;
+    padding: 5px;
+  }
+
+  tr:nth-child(even) {
+    background-color: $silver-snow;
+  }
+
+  tr:nth-child(odd) {
+    background-color: $snow;
+  }
+}
