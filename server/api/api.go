@@ -156,6 +156,10 @@ func atomicGetCode() string {
 func GetEndpoints() []*rest.Endpoint {
 	return []*rest.Endpoint{
 		{
+			Path:       "/",
+			HandleFunc: http.FileServer(http.Dir("web/build/web")).ServeHTTP,
+		},
+		{
 			Path:       FullShareBase + saveFile,
 			HandleFunc: SaveFile,
 		},

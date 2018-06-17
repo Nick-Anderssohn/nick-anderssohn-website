@@ -8,20 +8,29 @@
     <link rel="stylesheet" type="text/css" href="../styles/material/materialize.css">
     <script defer src="main.dart" type="application/dart"></script>
     <script defer src="packages/browser/dart.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 </head>
 <body class="no-select body">
 <nav>
     <div class="nav-wrapper">
         <div class="col s12">
             <a href="/" class="breadcrumb" style="margin-left: 5px;">Full Share</a>
-            <a href="/login" class="breadcrumb">Login</a>
+            <a href="/createAccount" class="breadcrumb">Create Account</a>
         </div>
     </div>
 </nav>
 <div class="middle">
-    <a class="waves-effect waves-light btn-large">Create Account</a>
-    <div style="height: 10px;"></div>
-    <a class="waves-effect waves-light btn-large">Login</a>
+    <div class="row">
+        <form class="col s12">
+            <div class="input-field col s12">
+                <input id="username" type="text" class="validate" placeholder="Username">
+            </div>
+            <div class="input-field col s12">
+                <input id="password" type="password" class="validate" placeholder="Password">
+            </div>
+            <input type="button" value="Login" class="waves-effect waves-light btn-large">
+        </form>
+    </div>
 </div>
 </body>
 </html>

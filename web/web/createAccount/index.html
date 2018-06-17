@@ -8,6 +8,7 @@
     <link rel="stylesheet" type="text/css" href="../styles/material/materialize.css">
     <script defer src="main.dart" type="application/dart"></script>
     <script defer src="packages/browser/dart.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 </head>
 <body class="no-select body">
 <nav>
@@ -22,18 +23,15 @@
     <div class="row">
         <form class="col s12">
             <div class="input-field col s12">
-                <input id="username" type="text" class="validate">
-                <label for="username">Username</label>
+                <input id="username" type="text" class="validate" placeholder="Username">
             </div>
             <div class="input-field col s12">
-                <input id="password" type="password" class="validate">
-                <label for="password">Password</label>
+                <input id="password" type="password" class="validate" placeholder="Password">
             </div>
             <div class="input-field col s12">
-                <input id="confirm-password" type="password" class="validate" >
-                <label for="confirm-password">Confirm Password</label>
+                <input id="confirm-password" type="password" class="validate" placeholder="Confirm Password">
             </div>
-            <input type="submit" value="Create Account" class="waves-effect waves-light btn-large">
+            <input type="button" value="Create Account" class="waves-effect waves-light btn-large">
         </form>
     </div>
 </div>
