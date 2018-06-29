@@ -1,0 +1,16 @@
+.message {
+  margin: 5px;
+  box-sizing: border-box;
+  border-bottom: solid 1px;
+}
+
+.message-text-area-container {
+  width: calc(100% - 32px); // - 32px to give room for the icon
+  display: inline-block;
+  padding-left: 1px;
+}
+
+.message-icon-holder {
+  width: 28px;
+  display: inline-block;
+}
