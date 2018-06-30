@@ -4,40 +4,42 @@ import (
 	"database/sql"
 	"fmt"
 
-	"log"
-
 	_ "github.com/lib/pq"
+	"io/ioutil"
+	"encoding/json"
+	"time"
 )
 
-// TODO: read username and password from config file
-const (
-	postgresUserName = "postgres"
-	postgresPassword = "123"
-	dbName           = "full_share"
-)
+type dbConfig struct {
+	Username string `json:"Username"`
+	Password string `json:"Password"`
+	DbName string `json:"DbName"`
+}
+
+var config dbConfig
+
+const dbConfigPath = "db_config.json"
 
 type FileInfo struct {
-	Code            string
-	IsCompressed    bool
-	CompressionType string
-	Path            string
-	FileSize        int
+	Code       string
+	Name       string
+	FileSize   int
+	UploadedOn *time.Time
 }
 
 const (
 	createFilesTableIFNotExistsSql = `
 CREATE TABLE IF NOT EXISTS files(
-  code VARCHAR(6) PRIMARY KEY,
-  isCompressed BOOLEAN DEFAULT FALSE,
-  compressionType VARCHAR(15) DEFAULT '',
-  path VARCHAR(50) NOT NULL,
-  fileSize INTEGER DEFAULT 0
+  code VARCHAR(36) PRIMARY KEY,
+  name VARCHAR(50) NOT NULL,
+  fileSize INTEGER DEFAULT 0,
+  uploadedOn DATE 
 );
 `
 
 	insertIntoFilesTableSQL = `
 INSERT INTO files
-VALUES ($1, $2, $3, $4, $5);
+VALUES ($1, $2, $3);
 `
 
 	selectFileInfoSql = `
@@ -52,28 +54,32 @@ SELECT COUNT(*) FROM files WHERE code = $1;
 var conn *sql.DB
 
 func init() {
+	readDBConfig()
 	ConnectToDb()
 	CreateTablesIfNotExists()
 }
 
-func ConnectToDb() {
-	var err error
-	connStr := fmt.Sprintf("postgres://%s:%s@localhost/%s?sslmode=disable", postgresUserName, postgresPassword, dbName)
-	conn, err = sql.Open("postgres", connStr)
-	if err != nil {
-		log.Println(err.Error())
+func readDBConfig() {
+	configBytes, _ := ioutil.ReadFile(dbConfigPath)
+	json.Unmarshal(configBytes, &config)
+	if config.DbName == "" {
+		panic("no database name")
 	}
+}
+
+func ConnectToDb() {
+	connStr := fmt.Sprintf("postgres://%s:%s@localhost/%s?sslmode=disable", config.Username, config.Password, config.DbName)
+	conn, _ = sql.Open("postgres", connStr)
 }
 
 func CreateTablesIfNotExists() {
-	if _, err := conn.Exec(createFilesTableIFNotExistsSql); err != nil {
-		log.Println(err.Error())
-	}
+	conn.Exec(createFilesTableIFNotExistsSql)
 }
 
-func InsertNewFileInfo(code, compressionType, path string, isCompressed bool, fileSize int) (err error) {
-	if _, err = conn.Exec(insertIntoFilesTableSQL, code, isCompressed, compressionType, path, fileSize); err != nil {
-		log.Println(err.Error())
+func InsertNewFileInfo(code, name string, fileSize int) (err error) {
+	now := time.Now().UTC()
+	if _, err = conn.Exec(insertIntoFilesTableSQL, code, name, fileSize, &now); err != nil {
+		panic(err.Error())
 	}
 	return
 }
@@ -81,9 +87,8 @@ func InsertNewFileInfo(code, compressionType, path string, isCompressed bool, fi
 func SelectFileInfo(code string) *FileInfo {
 	var fileInfo FileInfo
 	row := conn.QueryRow(selectFileInfoSql, code)
-	if err := row.Scan(&fileInfo.Code, &fileInfo.IsCompressed, &fileInfo.CompressionType, &fileInfo.Path, &fileInfo.FileSize); err != nil {
-		log.Println(err.Error())
-		return nil
+	if err := row.Scan(&fileInfo.Code, &fileInfo.Name, &fileInfo.FileSize, &fileInfo.UploadedOn); err != nil {
+		panic(err.Error())
 	}
 	return &fileInfo
 }

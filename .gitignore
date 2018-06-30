@@ -10,3 +10,4 @@ packages
 .flutter-plugins
 data/
 pubspec.lock
+db_config.json
