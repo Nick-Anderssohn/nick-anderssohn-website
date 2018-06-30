@@ -1,3 +1,6 @@
+import '../lib/full_share/quick_share/quick_share.dart';
+
 void main() {
-  print('hello world');
+  QuickShare app = new QuickShare();
+  app.run();
 }
