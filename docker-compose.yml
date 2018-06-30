@@ -1,0 +1,12 @@
+version: '3'
+services:
+  web:
+    image: 'nginx'
+    volumes:
+     - './web/build/web:/usr/share/nginx/html'
+    ports:
+     - '8080:80'
+
+#  file-manager:
+#    build: 'server/.'
+#    image: 'full-share-file-manager'
