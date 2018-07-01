@@ -18,3 +18,10 @@ void showElem(Element elem) => elem.style.display = '';
 /// HIdes an element by setting display = "none"
 /// Will throw an exception if elem is null
 void hideElem(Element elem) => elem.style.display = 'none';
+
+String getNewURL(String curURL, String curEndpoint, String newEndpoint) {
+  String newURL = curURL;
+  var index = newURL.lastIndexOf(curEndpoint);
+  newURL = newURL.substring(0, index);
+  return newURL + newEndpoint;
+}

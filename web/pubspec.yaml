@@ -8,6 +8,7 @@ dependencies:
   browser: any
   js: any
   dart_sass_transformer: any
+  clippy: 0.2.0
 transformers:
 - $dart2js:
     minify: true

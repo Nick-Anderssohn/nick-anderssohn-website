@@ -1,6 +1,7 @@
 library quickshare;
 
 import '../../extended_html/extended_html.dart';
+import 'package:clippy/browser.dart' as clippy;
 import 'package:full_share/full_share/api_consumer/api_consumer.dart';
 
 class QuickShare {
@@ -10,6 +11,8 @@ class QuickShare {
   DivElement _progContainer;
   AnchorElement _shareBtn;
   FileReader _fileReader = new FileReader();
+  DivElement _successfulContainer;
+  ParagraphElement _linkElem;
 
   void run() {
     try {
@@ -29,6 +32,8 @@ class QuickShare {
     _sendBtn = tryQuerySelector('#send-btn');
     _progContainer = tryQuerySelector('#prog-container');
     _shareBtn = tryQuerySelector('#share-btn');
+    _successfulContainer = tryQuerySelector('#successful-container');
+    _linkElem = tryQuerySelector('#link');
   }
 
   void _setupHandlers() {
@@ -47,9 +52,38 @@ class QuickShare {
     });
 
     _shareBtn.onClick.listen((_) => _fileInput.click());
+    _copyBtn.onClick.listen((_) => clippy.write(_linkElem.text));
   }
 
   void _handleLoadFile(ProgressEvent e) {
-    FullShareApiConsumer.requestUpload(_fileInput.files.first.name, _fileReader.result).then(print).catchError(window.alert);
+    showElem(_progContainer);
+    FullShareApiConsumer.requestUpload(_fileInput.files.first.name, _fileReader.result).then(_handleUploadResp).catchError(print).whenComplete(([_]) => hideElem(_progContainer));
+  }
+
+  void _handleUploadResp(Map responseJson) {
+    if (responseJson['Success']) {
+      showElem(_successfulContainer);
+      _linkElem.text = responseJson['DownloadLink'];
+      _sendBtn.href = _getSMSHref();
+    }
+  }
+
+  String _getSMSHref() {
+    String href = 'sms:&body=${Uri.encodeFull(_linkElem.text)}';
+
+    if (isAndroid()) {
+      href = 'sms:?body=${Uri.encodeFull(_linkElem.text)}';
+    }
+
+    return href;
+  }
+
+  bool isAndroid() {
+    var mua = window.navigator.userAgent;
+    if (mua == null) {
+      mua = window.navigator.vendor;
+    }
+    mua = mua?.toLowerCase();
+    return mua?.contains('android');
   }
 }
