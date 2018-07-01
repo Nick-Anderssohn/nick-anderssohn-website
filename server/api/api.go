@@ -51,6 +51,7 @@ func SaveFile(writer http.ResponseWriter, req *http.Request) {
 	}
 
 	saveFileReq.FileName = req.Header.Get("FileName")
+	fmt.Println("file name:", saveFileReq.FileName)
 
 	if saveFileReq.Data, err = ioutil.ReadAll(req.Body); err != nil {
 		resp.Message = "Could not read request body."
@@ -58,7 +59,7 @@ func SaveFile(writer http.ResponseWriter, req *http.Request) {
 	}
 
 	var success, alreadyExists bool
-	var code, path string
+	var code string
 
 	for !success {
 		for !success {
@@ -68,7 +69,7 @@ func SaveFile(writer http.ResponseWriter, req *http.Request) {
 				success = false
 			}
 		}
-		if alreadyExists, path, err = file.SaveFile(code, saveFileReq.FileName, saveFileReq.Data); err != nil || alreadyExists {
+		if alreadyExists, _, err = file.SaveFile(code, saveFileReq.FileName, saveFileReq.Data); err != nil || alreadyExists {
 			if alreadyExists {
 				log.Println("Code already in use: ", code)
 				success = false
@@ -79,7 +80,7 @@ func SaveFile(writer http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	db.InsertNewFileInfo(code,  path, fileSize)
+	db.InsertNewFileInfo(code,  saveFileReq.FileName, fileSize)
 
 	resp.Success = true
 	resp.DownloadLink = "http://" + domain + FullShareBase + downloadFile + "/" + code + "/" + saveFileReq.FileName

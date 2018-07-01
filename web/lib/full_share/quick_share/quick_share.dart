@@ -50,6 +50,6 @@ class QuickShare {
   }
 
   void _handleLoadFile(ProgressEvent e) {
-    FullShareApiConsumer.requestUpload(_fileInput.files.first.name, _fileReader.result).then(print);
+    FullShareApiConsumer.requestUpload(_fileInput.files.first.name, _fileReader.result).then(print).catchError(window.alert);
   }
 }

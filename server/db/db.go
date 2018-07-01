@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS files(
 
 	insertIntoFilesTableSQL = `
 INSERT INTO files
-VALUES ($1, $2, $3);
+VALUES ($1, $2, $3, $4);
 `
 
 	selectFileInfoSql = `
