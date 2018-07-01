@@ -83,7 +83,7 @@ func SaveFile(writer http.ResponseWriter, req *http.Request) {
 	db.InsertNewFileInfo(code,  saveFileReq.FileName, fileSize)
 
 	resp.Success = true
-	resp.DownloadLink = "http://" + domain + FullShareBase + downloadFile + "/" + code + "/" + saveFileReq.FileName
+	resp.DownloadLink = "http://" + domain + downloadFile + "/" + code + "/" + saveFileReq.FileName
 }
 
 func sendJson(writer http.ResponseWriter, data interface{}) {
