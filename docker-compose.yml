@@ -4,6 +4,8 @@ services:
     image: 'postgres'
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - full-share-file-db:/var/lib/postgresql/data
 #    restart: always
 
   file-manager:
@@ -11,8 +13,6 @@ services:
       - file-db
     build: 'server/.'
     image: 'full-share-file-manager'
-    ports:
-     - '8081:8080'
     volumes:
      - download-volume:/download
 #    restart: always
@@ -31,3 +31,4 @@ services:
 
 volumes:
   download-volume:
+  full-share-file-db:

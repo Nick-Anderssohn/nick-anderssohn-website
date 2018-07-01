@@ -10,7 +10,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 	"io/ioutil"
 )
 
@@ -32,32 +31,29 @@ type SaveFileResp struct {
 	DownloadLink    string `json:"DownloadLink"`
 }
 
-func strToBool(str string) bool {
-	return strings.ToLower(str) == "true"
-}
-
-func boolToStr(value bool) string {
-	if value {
-		return "true"
+func recoverAndLog() {
+	if e := recover(); e != nil {
+		log.Println(e)
 	}
-	return "false"
 }
 
 func SaveFile(writer http.ResponseWriter, req *http.Request) {
+	fmt.Println("In save file!")
 	var saveFileReq SaveFileReq
 	var resp SaveFileResp
-
+	defer recoverAndLog()
 	defer sendJson(writer, &resp)
 
 	fileSize, err := strconv.Atoi(req.Header.Get("FileSize"))
 	if err != nil {
 		resp.Message = "Could not parse file size"
-		panic("could not parse file size")
+		return
 	}
+
+	saveFileReq.FileName = req.Header.Get("FileName")
 
 	if saveFileReq.Data, err = ioutil.ReadAll(req.Body); err != nil {
 		resp.Message = "Could not read request body."
-		panic("could not read request body.")
 		return
 	}
 
@@ -78,7 +74,7 @@ func SaveFile(writer http.ResponseWriter, req *http.Request) {
 				success = false
 			} else {
 				resp.Message = "Could not save file."
-				panic("could not save file")
+				return
 			}
 		}
 	}
