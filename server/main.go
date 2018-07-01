@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"full-share/server/fullshare"
+	"fmt"
 )
 
 func main() {

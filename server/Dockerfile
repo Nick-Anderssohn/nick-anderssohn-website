@@ -4,7 +4,7 @@ RUN go get github.com/satori/go.uuid
 RUN mkdir -p /go/src/full-share/server
 WORKDIR /go/src/full-share/server
 COPY . .
-RUN go build
+RUN CGO_ENABLED=0 go build -a -ldflags '-extldflags "-static"' .
 
 FROM alpine
 RUN mkdir download

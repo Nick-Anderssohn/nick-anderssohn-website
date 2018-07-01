@@ -29,6 +29,6 @@ class QuickShare {
   }
 
   void _setupHandlers() {
-    
+
   }
 }
