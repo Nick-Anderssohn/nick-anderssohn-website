@@ -13,7 +13,9 @@ import (
 type dbConfig struct {
 	Username string `json:"Username"`
 	Password string `json:"Password"`
+	PostgresPassword string `json:"PostgresPassword"`
 	DbName string `json:"DbName"`
+	Host string `json:"Host"`
 }
 
 var config dbConfig
@@ -55,6 +57,8 @@ var conn *sql.DB
 
 func init() {
 	readDBConfig()
+	time.Sleep(5 * time.Second) // give postgres a little bit of time to start.
+	createDbIfNotExist()
 	ConnectToDb()
 	CreateTablesIfNotExists()
 }
@@ -68,12 +72,41 @@ func readDBConfig() {
 }
 
 func ConnectToDb() {
-	connStr := fmt.Sprintf("postgres://%s:%s@localhost/%s?sslmode=disable", config.Username, config.Password, config.DbName)
-	conn, _ = sql.Open("postgres", connStr)
+	var err error
+	connStr := getConnStr(config.Host, config.Username, config.Password, config.DbName)
+	if conn, err = sql.Open("postgres", connStr); err != nil {
+		panic(err.Error())
+	}
+}
+
+func createDbIfNotExist() {
+	for tries := 0; tries < 10; tries++ {
+		var count int
+		connStr := getConnStr(config.Host, "postgres", config.PostgresPassword, "postgres")
+		postgresConn, err := sql.Open("postgres", connStr)
+		if err == nil {
+			tries = 10
+			rows := postgresConn.QueryRow(fmt.Sprintf("SELECT COUNT(*) FROM pg_database WHERE datname = '%s'", config.DbName))
+			rows.Scan(&count)
+			if count == 0 {
+				fmt.Println("Creating", config.DbName, "database")
+				postgresConn.Exec(fmt.Sprintf("CREATE DATABASE %s OWNER postgres", config.DbName))
+			}
+		} else {
+			time.Sleep(1 * time.Second)
+		}
+	}
+
+}
+
+func getConnStr(host, user, password, dbname string) string {
+	return fmt.Sprintf("host=%s user='%s' password='%s' dbname='%s' sslmode=disable", host, user, password, dbname)
 }
 
 func CreateTablesIfNotExists() {
-	conn.Exec(createFilesTableIFNotExistsSql)
+	if _, err := conn.Exec(createFilesTableIFNotExistsSql); err != nil {
+		panic(err.Error())
+	}
 }
 
 func InsertNewFileInfo(code, name string, fileSize int) (err error) {

@@ -9,5 +9,6 @@ RUN CGO_ENABLED=0 go build -a -ldflags '-extldflags "-static"' .
 FROM alpine
 RUN mkdir download
 COPY --from=builder /go/src/full-share/server/server .
+COPY --from=builder /go/src/full-share/server/db_config.json .
 EXPOSE 8080
 CMD ["/server"]
