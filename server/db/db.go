@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS files(
   code VARCHAR(36) PRIMARY KEY,
   name VARCHAR(50) NOT NULL,
   fileSize INTEGER DEFAULT 0,
-  uploadedOn DATE 
+  uploadedOn TIMESTAMP 
 );
 `
 
@@ -51,6 +51,10 @@ SELECT * FROM files WHERE code = $1;
 	countFileWithCode = `
 SELECT COUNT(*) FROM files WHERE code = $1;
 `
+
+	deleteFileInfo = `DELETE FROM files WHERE code = $1;`
+
+	deleteOlderThan = `DELETE FROM files WHERE date_part('day', age($1, uploadedOn)) >= $2 RETURNING code;`
 )
 
 var conn *sql.DB
@@ -130,4 +134,24 @@ func FileInfoExists(code string) bool {
 	var count int
 	conn.QueryRow(countFileWithCode, code).Scan(&count)
 	return count >= 1
+}
+
+func DeleteFileInfo(code string) {
+	result, _ := conn.Exec(deleteFileInfo, code)
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected <= 0 {
+		panic("Could not delete row with code " + code)
+	}
+}
+
+func DeleteFilesOlderThan(days int) []string {
+	now := time.Now().UTC()
+	rows, _ := conn.Query(deleteOlderThan, &now, days)
+	codes := []string{}
+	for rows.Next() {
+		var code string
+		rows.Scan(&code)
+		codes = append(codes, code)
+	}
+	return codes
 }
