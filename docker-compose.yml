@@ -8,7 +8,7 @@ services:
       - full-share-file-db:/var/lib/postgresql/data
     ports:
       - 5432:5432
-#    restart: always
+    restart: always
 
   file-manager:
     depends_on:
@@ -17,7 +17,7 @@ services:
     image: 'full-share-file-manager'
     volumes:
      - download-volume:/download
-#    restart: always
+    restart: always
 
   full-share-nginx:
     depends_on:
@@ -25,11 +25,13 @@ services:
     build: 'nginx'
     image: 'full-share-nginx'
     volumes:
-     - './web/build/web:/usr/share/nginx/html'
-     - download-volume:/full-share/download
+     - ./web/build/web:/usr/share/nginx/html:ro
+     - /etc/letsencrypt:/etc/letsencrypt:ro
+     - /var/lib/letsencrypt:/var/lib/letsencrypt:ro
     ports:
-     - '8080:80'
-#    restart: always
+     - '80:80'
+     - '443:443'
+    restart: always
 
 volumes:
   download-volume:
