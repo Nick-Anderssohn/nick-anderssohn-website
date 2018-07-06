@@ -2,8 +2,9 @@ library api_consumer;
 
 import 'dart:async';
 import 'dart:convert';
-import '../../extended_html/extended_html.dart';
 import 'dart:typed_data';
+
+import 'package:full_share/extended_html/extended_html.dart';
 
 class FullShareApiConsumer {
   static const String uploadEndpoint = '/upload';

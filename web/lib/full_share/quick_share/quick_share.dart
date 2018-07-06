@@ -1,7 +1,7 @@
 library quickshare;
 
-import '../../extended_html/extended_html.dart';
 import 'package:clippy/browser.dart' as clippy;
+import 'package:full_share/extended_html/extended_html.dart';
 import 'package:full_share/full_share/api_consumer/api_consumer.dart';
 
 class QuickShare {
@@ -52,7 +52,10 @@ class QuickShare {
     });
 
     _shareBtn.onClick.listen((_) => _fileInput.click());
-    _copyBtn.onClick.listen((_) => clippy.write(_linkElem.text));
+    _copyBtn.onClick.listen((_) {
+      clippy.write(_linkElem.text);
+      window.alert('Copied to clipboard.');
+    });
   }
 
   void _handleLoadFile(ProgressEvent e) {
