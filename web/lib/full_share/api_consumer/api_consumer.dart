@@ -11,7 +11,7 @@ class FullShareApiConsumer {
 
   static Future<Map> requestUpload(String fileName, Uint8List fileBytes) {
     int fileSize = fileBytes.length;
-    if (fileSize > 6.554 * 10000000) {
+    if (fileSize > 5.243 * 100000000) {
       window.alert('File size cannot be greater than 500 Mib');
       throw 'File size cannot be greater than 500 Mib';
     }
