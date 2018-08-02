@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"time"
+	"strings"
 )
 
 type dbConfig struct {
@@ -73,6 +74,7 @@ func readDBConfig() {
 	if config.DbName == "" {
 		panic("no database name")
 	}
+	config.DbName = strings.ToLower(config.DbName)
 }
 
 func ConnectToDb() {
