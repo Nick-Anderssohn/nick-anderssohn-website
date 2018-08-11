@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/satori/go.uuid"
-	"full-share/server/db"
-	"full-share/server/file"
-	"full-share/server/rest"
+	"nick-anderssohn-website/full-share/server/db"
+	"nick-anderssohn-website/full-share/server/file"
+	"nick-anderssohn-website/full-share/server/serverutil"
 	"log"
 	"net/http"
 	"strconv"
@@ -99,8 +99,8 @@ func getUUID() string {
 	return uuid.Must(uuid.NewV4()).String()
 }
 
-func GetEndpoints() []*rest.Endpoint {
-	return []*rest.Endpoint{
+func GetEndpoints() []*serverutil.Endpoint {
+	return []*serverutil.Endpoint{
 		{
 			Path:       "/",
 			HandleFunc: SaveFile,

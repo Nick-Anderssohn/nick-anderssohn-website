@@ -1,9 +1,9 @@
 package reaper
 
 import (
-	"full-share/server/file"
+	"nick-anderssohn-website/full-share/server/file"
 	"os"
-	"full-share/server/db"
+	"nick-anderssohn-website/full-share/server/db"
 	"log"
 	"time"
 )

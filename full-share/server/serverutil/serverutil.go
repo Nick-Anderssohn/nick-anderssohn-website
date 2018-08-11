@@ -1,5 +1,5 @@
 // Package rest contains a basic rest server
-package rest
+package serverutil
 
 import (
 	"context"

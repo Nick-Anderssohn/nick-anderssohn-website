@@ -1,9 +1,9 @@
 package main
 
 import (
-	"full-share/server/fullshare"
+	"nick-anderssohn-website/full-share/server/fullshare"
 	"fmt"
-	"full-share/server/reaper"
+	"nick-anderssohn-website/full-share/server/reaper"
 )
 
 func main() {
