@@ -23,7 +23,7 @@ services:
     build: 'full-share/nginx'
     image: 'full-share-nginx'
     volumes:
-     - ./web/build/web:/usr/share/nginx/html:ro
+     - ./full-share/web/build/web:/usr/share/nginx/html:ro
      - download-volume:/full-share/download:ro
      - /etc/letsencrypt:/etc/letsencrypt:ro
      - /var/lib/letsencrypt:/var/lib/letsencrypt:ro
