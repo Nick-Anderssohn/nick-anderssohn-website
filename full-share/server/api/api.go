@@ -10,6 +10,7 @@ import (
 	"nick-anderssohn-website/full-share/server/file"
 	"nick-anderssohn-website/full-share/server/serverutil"
 	"strconv"
+	"net/url"
 )
 
 const (
@@ -83,7 +84,15 @@ func SaveFile(writer http.ResponseWriter, req *http.Request) {
 	db.InsertNewFileInfo(code, saveFileReq.FileName, fileSize)
 
 	resp.Success = true
-	resp.DownloadLink = "https://" + domain + downloadFile + "/" + code + "/" + saveFileReq.FileName
+	resp.DownloadLink = makeUrl(downloadFile, "/", code, "/", saveFileReq.FileName)
+}
+
+func makeUrl(pathComponents ...string) string {
+	u, _ := url.Parse("https://" + domain)
+	for _, component := range pathComponents {
+		u.Path += component
+	}
+	return u.String()
 }
 
 // Does not return an error. Instead simply logs.
