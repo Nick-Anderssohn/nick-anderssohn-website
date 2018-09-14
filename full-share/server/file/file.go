@@ -23,11 +23,12 @@ func SaveFile(code, fileName string, data []byte) (fileAlreadyExists bool, fileP
 	return
 }
 
-func DeleteFile(code string) {
+func DeleteFile(code string) error {
 	filePath := fmt.Sprintf("%s%s", fileFolderPath, code)
 	if err := os.RemoveAll(filePath); err != nil {
-		panic("Could not remove file for code " + code)
+		return fmt.Errorf("could not remove file for code %s", code)
 	}
+	return nil
 }
 
 // returns the path to the code folder which should contain a file if it exists

@@ -59,12 +59,13 @@ func SaveFile(writer http.ResponseWriter, req *http.Request) {
 	var success, alreadyExists bool
 	var code string
 
+	// TODO: limit number of retries
 	for !success {
 		// Grab a code until an unused one is found
-		// TODO: remove potential infinite loop
+		// TODO: limit number of retries
 		for !success {
 			success = true
-			code = getUUID()
+			code = getUuid()
 			if db.FileInfoExists(code) {
 				success = false
 			}
@@ -73,20 +74,26 @@ func SaveFile(writer http.ResponseWriter, req *http.Request) {
 		// Save the file. Double check if there is a conflict.
 		alreadyExists, _, err = file.SaveFile(code, saveFileReq.FileName, saveFileReq.Data)
 		if alreadyExists {
-			log.Println("Code already in use: ", code)
+			log.Println("code already in use: ", code)
 			success = false
 		} else if err != nil {
+			log.Println("error saving file ", err)
 			resp.Message = "Could not save file."
 			return
 		}
 	}
 
-	db.InsertNewFileInfo(code, saveFileReq.FileName, fileSize)
+	err = db.InsertNewFileInfo(code, saveFileReq.FileName, fileSize)
+	if err != nil {
+		log.Println("error inserting file info into database ", err)
+		return
+	}
 
 	resp.Success = true
 	resp.DownloadLink = makeUrl(downloadFile, "/", code, "/", saveFileReq.FileName)
 }
 
+// Appends pathComponents to the end of "https://"+domain and percent encodes them
 func makeUrl(pathComponents ...string) string {
 	u, _ := url.Parse("https://" + domain)
 	for _, component := range pathComponents {
@@ -95,17 +102,17 @@ func makeUrl(pathComponents ...string) string {
 	return u.String()
 }
 
-// Does not return an error. Instead simply logs.
+// Does not return an error. Instead simply logs and returns if data cannot be marshalled into json.
 func sendJson(writer http.ResponseWriter, data interface{}) {
 	b, err := json.Marshal(data)
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("error marshalling json ", err)
 		return
 	}
 	writer.Write(b)
 }
 
-func getUUID() string {
+func getUuid() string {
 	return uuid.Must(uuid.NewV4()).String()
 }
 

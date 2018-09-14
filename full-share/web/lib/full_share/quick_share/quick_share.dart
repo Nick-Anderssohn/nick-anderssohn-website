@@ -72,10 +72,10 @@ class QuickShare {
   }
 
   String _getSMSHref() {
-    String href = 'sms:&body=${Uri.encodeFull(_linkElem.text)}';
+    String href = 'sms:&body=${Uri.encodeComponent(_linkElem.text)}';
 
     if (isAndroid()) {
-      href = 'sms:?body=${Uri.encodeFull(_linkElem.text)}';
+      href = 'sms:?body=${Uri.encodeComponent(_linkElem.text)}';
     }
 
     return href;
