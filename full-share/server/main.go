@@ -8,13 +8,15 @@ import (
 )
 
 func main() {
-	server := fullshare.NewServer("0.0.0.0", "8080")
-	fmt.Println("Starting reaper...")
 	if config.ApplicationConfig.RunReaper {
+		fmt.Println("Starting reaper...")
 		go reaper.ReapEvery48Hours()
 	}
+
+	server := fullshare.NewServer("0.0.0.0", "8080")
 	fmt.Println("Starting server...")
-	if err := server.Run(); err != nil {
+	err := server.Run()
+	if err != nil {
 		fmt.Println(err.Error())
 	}
 }
