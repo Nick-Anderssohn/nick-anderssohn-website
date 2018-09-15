@@ -10,5 +10,6 @@ FROM alpine
 RUN mkdir download
 COPY --from=builder /go/src/nick-anderssohn-website/full-share/server/server .
 COPY --from=builder /go/src/nick-anderssohn-website/full-share/server/db_config.json .
+COPY --from=builder /go/src/nick-anderssohn-website/full-share/server/config.json .
 EXPOSE 8080
 CMD ["/server"]

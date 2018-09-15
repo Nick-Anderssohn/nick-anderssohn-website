@@ -16,6 +16,9 @@ services:
     volumes:
      - download-volume:/download
     restart: always
+    environment:
+     - WEBSITE_DOMAIN=nickanderssohn.com
+     - WEBSITE_PROTOCOL=https://
 
   full-share-nginx:
     depends_on:

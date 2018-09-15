@@ -2,22 +2,26 @@ package api
 
 import (
 	"encoding/json"
-	"github.com/satori/go.uuid"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"nick-anderssohn-website/full-share/server/db"
 	"nick-anderssohn-website/full-share/server/file"
 	"nick-anderssohn-website/full-share/server/serverutil"
+	"os"
 	"strconv"
-	"net/url"
+
+	"github.com/satori/go.uuid"
 )
 
 const (
 	FullShareBase = "/fullShare"
 	downloadFile  = "/download"
-	domain        = "nickanderssohn.com"
 )
+
+var domain string
+var protocol string
 
 type SaveFileReq struct {
 	Data     []byte `json:"Data"`
@@ -31,13 +35,19 @@ type SaveFileResp struct {
 	DownloadLink string `json:"DownloadLink"`
 }
 
+func init() {
+	domain = os.Getenv("WEBSITE_DOMAIN")
+	protocol = os.Getenv("WEBSITE_PROTOCOL")
+}
+
 func recoverAndLog() {
 	if e := recover(); e != nil {
 		log.Println(e)
 	}
 }
 
-func SaveFile(writer http.ResponseWriter, req *http.Request) {
+// saveFile is an http handler func that saves a file
+func saveFile(writer http.ResponseWriter, req *http.Request) {
 	var saveFileReq SaveFileReq
 	var resp SaveFileResp
 	defer recoverAndLog()
@@ -45,13 +55,16 @@ func SaveFile(writer http.ResponseWriter, req *http.Request) {
 
 	fileSize, err := strconv.Atoi(req.Header.Get("FileSize"))
 	if err != nil {
+		log.Println("could not parse file size")
 		resp.Message = "Could not parse file size"
 		return
 	}
 
 	saveFileReq.FileName = req.Header.Get("FileName")
 
-	if saveFileReq.Data, err = ioutil.ReadAll(req.Body); err != nil {
+	saveFileReq.Data, err = ioutil.ReadAll(req.Body)
+	if err != nil {
+		log.Println("could not read request body")
 		resp.Message = "Could not read request body."
 		return
 	}
@@ -59,15 +72,28 @@ func SaveFile(writer http.ResponseWriter, req *http.Request) {
 	var success, alreadyExists bool
 	var code string
 
-	// TODO: limit number of retries
-	for !success {
+	for retryCount := 0; !success; retryCount++ {
 		// Grab a code until an unused one is found
-		// TODO: limit number of retries
-		for !success {
+		for retryCount2 := 0; !success; retryCount2++ {
 			success = true
 			code = getUuid()
-			if db.FileInfoExists(code) {
+
+			exists, err := db.FileInfoExists(code)
+			if err != nil {
+				log.Println("error saving file ", err)
+				resp.Message = "Could not save file."
+				return
+			}
+
+			if exists {
 				success = false
+			}
+
+			// Stop after 10 retries
+			if retryCount2 >= 10 {
+				log.Println("could not generate new code")
+				resp.Message = "Could not save file."
+				return
 			}
 		}
 
@@ -81,11 +107,19 @@ func SaveFile(writer http.ResponseWriter, req *http.Request) {
 			resp.Message = "Could not save file."
 			return
 		}
+
+		// Stop after 10 retries
+		if retryCount >= 10 {
+			log.Println("could not save file")
+			resp.Message = "Could not save file."
+			return
+		}
 	}
 
 	err = db.InsertNewFileInfo(code, saveFileReq.FileName, fileSize)
 	if err != nil {
 		log.Println("error inserting file info into database ", err)
+		resp.Message = "Could not save file."
 		return
 	}
 
@@ -95,7 +129,7 @@ func SaveFile(writer http.ResponseWriter, req *http.Request) {
 
 // Appends pathComponents to the end of "https://"+domain and percent encodes them
 func makeUrl(pathComponents ...string) string {
-	u, _ := url.Parse("https://" + domain)
+	u, _ := url.Parse(protocol + domain)
 	for _, component := range pathComponents {
 		u.Path += component
 	}
@@ -120,7 +154,7 @@ func GetEndpoints() []*serverutil.Endpoint {
 	return []*serverutil.Endpoint{
 		{
 			Path:       "/",
-			HandleFunc: SaveFile,
+			HandleFunc: saveFile,
 		},
 	}
 }

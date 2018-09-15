@@ -4,19 +4,21 @@ import (
 	"database/sql"
 	"fmt"
 
-	_ "github.com/lib/pq"
-	"io/ioutil"
 	"encoding/json"
-	"time"
+	"io/ioutil"
+	cfg "nick-anderssohn-website/full-share/server/config"
 	"strings"
+	"time"
+
+	_ "github.com/lib/pq"
 )
 
 type dbConfig struct {
-	Username string `json:"Username"`
-	Password string `json:"Password"`
+	Username         string `json:"Username"`
+	Password         string `json:"Password"`
 	PostgresPassword string `json:"PostgresPassword"`
-	DbName string `json:"DbName"`
-	Host string `json:"Host"`
+	DbName           string `json:"DbName"`
+	Host             string `json:"Host"`
 }
 
 var config dbConfig
@@ -45,15 +47,7 @@ INSERT INTO files
 VALUES ($1, $2, $3, $4);
 `
 
-	selectFileInfoSql = `
-SELECT * FROM files WHERE code = $1;
-`
-
-	countFileWithCode = `
-SELECT COUNT(*) FROM files WHERE code = $1;
-`
-
-	deleteFileInfo = `DELETE FROM files WHERE code = $1;`
+	selectFileInfoSql = `SELECT * FROM files WHERE code = $1;`
 
 	deleteOlderThan = `DELETE FROM files WHERE date_part('day', age($1, uploadedOn)) >= $2 RETURNING code;`
 )
@@ -61,14 +55,15 @@ SELECT COUNT(*) FROM files WHERE code = $1;
 var conn *sql.DB
 
 func init() {
-	readDBConfig()
-	time.Sleep(5 * time.Second) // give postgres a little bit of time to start.
-	createDbIfNotExist()
-	ConnectToDb()
-	CreateTablesIfNotExists()
+	if !cfg.ApplicationConfig.TestMode {
+		readDbConfig()
+		createDbIfNotExist()
+		connectToDb()
+		createTablesIfNotExists()
+	}
 }
 
-func readDBConfig() {
+func readDbConfig() {
 	configBytes, _ := ioutil.ReadFile(dbConfigPath)
 	json.Unmarshal(configBytes, &config)
 	if config.DbName == "" {
@@ -77,83 +72,83 @@ func readDBConfig() {
 	config.DbName = strings.ToLower(config.DbName)
 }
 
-func ConnectToDb() {
+func connectToDb() {
 	var err error
 	connStr := getConnStr(config.Host, config.Username, config.Password, config.DbName)
 	if conn, err = sql.Open("postgres", connStr); err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 }
 
 func createDbIfNotExist() {
-	for tries := 0; tries < 10; tries++ {
-		var count int
-		connStr := getConnStr(config.Host, "postgres", config.PostgresPassword, "postgres")
-		postgresConn, err := sql.Open("postgres", connStr)
-		if err == nil {
-			tries = 10
-			rows := postgresConn.QueryRow(fmt.Sprintf("SELECT COUNT(*) FROM pg_database WHERE datname = '%s'", config.DbName))
-			rows.Scan(&count)
-			if count == 0 {
-				fmt.Println("Creating", config.DbName, "database")
-				postgresConn.Exec(fmt.Sprintf("CREATE DATABASE %s OWNER postgres", config.DbName))
-			}
-		} else {
-			time.Sleep(1 * time.Second)
+	var count int
+	connStr := getConnStr(config.Host, "postgres", config.PostgresPassword, "postgres")
+	postgresConn, err := sql.Open("postgres", connStr)
+	if err != nil {
+		panic(err)
+	}
+	rows := postgresConn.QueryRow(fmt.Sprintf("SELECT COUNT(*) FROM pg_database WHERE datname = '%s'", config.DbName))
+	rows.Scan(&count)
+	if count == 0 {
+		fmt.Println("Creating", config.DbName, "database")
+		_, err = postgresConn.Exec(fmt.Sprintf("CREATE DATABASE %s OWNER postgres", config.DbName))
+		if err != nil {
+			panic(err)
 		}
 	}
-
 }
 
 func getConnStr(host, user, password, dbname string) string {
 	return fmt.Sprintf("host=%s user='%s' password='%s' dbname='%s' sslmode=disable", host, user, password, dbname)
 }
 
-func CreateTablesIfNotExists() {
+func createTablesIfNotExists() {
 	if _, err := conn.Exec(createFilesTableIFNotExistsSql); err != nil {
 		panic(err.Error())
 	}
 }
 
+// InsertNewFileInfo inserts a new file info into the files table
 func InsertNewFileInfo(code, name string, fileSize int) (err error) {
 	now := time.Now().UTC()
-	if _, err = conn.Exec(insertIntoFilesTableSQL, code, name, fileSize, &now); err != nil {
-		panic(err.Error())
-	}
+	_, err = conn.Exec(insertIntoFilesTableSQL, code, name, fileSize, &now)
 	return
 }
 
-func SelectFileInfo(code string) *FileInfo {
-	var fileInfo FileInfo
+// Returns a file info based off of code
+func SelectFileInfo(code string) (fileInfo *FileInfo, err error) {
+	fileInfo = &FileInfo{}
 	row := conn.QueryRow(selectFileInfoSql, code)
-	if err := row.Scan(&fileInfo.Code, &fileInfo.Name, &fileInfo.FileSize, &fileInfo.UploadedOn); err != nil {
-		panic(err.Error())
+	err = row.Scan(&fileInfo.Code, &fileInfo.Name, &fileInfo.FileSize, &fileInfo.UploadedOn)
+	return
+}
+
+// FileInfoExists checks if a file exists. Returns an error if there is a problem querying the database.
+func FileInfoExists(code string) (bool, error) {
+	_, err := SelectFileInfo(code)
+	if err == sql.ErrNoRows {
+		return false, nil
 	}
-	return &fileInfo
-}
-
-func FileInfoExists(code string) bool {
-	var count int
-	conn.QueryRow(countFileWithCode, code).Scan(&count)
-	return count >= 1
-}
-
-func DeleteFileInfo(code string) {
-	result, _ := conn.Exec(deleteFileInfo, code)
-	rowsAffected, _ := result.RowsAffected()
-	if rowsAffected <= 0 {
-		panic("Could not delete row with code " + code)
+	if err != nil {
+		return false, err
 	}
+	return true, nil
 }
 
-func DeleteFilesOlderThan(days int) []string {
+// DeleteFilesOlderThan deletes all file entries from the files table that are older than days.
+func DeleteFilesOlderThan(days int) (codes []string, err error) {
 	now := time.Now().UTC()
-	rows, _ := conn.Query(deleteOlderThan, &now, days)
-	codes := []string{}
+	rows, err := conn.Query(deleteOlderThan, &now, days)
+	if err != nil {
+		return
+	}
 	for rows.Next() {
 		var code string
-		rows.Scan(&code)
+		err = rows.Scan(&code)
+		if err != nil {
+			return
+		}
 		codes = append(codes, code)
 	}
-	return codes
+	return
 }

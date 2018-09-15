@@ -16,6 +16,9 @@ services:
     volumes:
      - download-volume:/download
     restart: always
+    environment:
+     - WEBSITE_DOMAIN=localhost:8080
+     - WEBSITE_PROTOCOL=http://
 
   full-share-nginx:
     depends_on:
