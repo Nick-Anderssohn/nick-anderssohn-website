@@ -1,5 +1,5 @@
 # Run with a volume to build dart code
-FROM google/dart:1.24.3
+FROM google/dart:2.0
 
 # install ruby and its dependencies
 RUN apt-get update
@@ -9,8 +9,12 @@ RUN apt-get install -y build-essential bison openssl libreadline6\
  libyaml-dev libxml2-dev autoconf libc6-dev ncurses-dev automake\
  libtool
 
-#install sass
+# install sass
 RUN gem install sass --no-user-install
+
+# install webdev
+RUN pub global activate webdev
+ENV PATH="${PATH}:/root/.pub-cache/bin"
 
 WORKDIR /
 RUN mkdir builder

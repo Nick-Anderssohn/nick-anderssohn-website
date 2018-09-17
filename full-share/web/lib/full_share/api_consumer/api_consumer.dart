@@ -17,7 +17,7 @@ class FullShareApiConsumer {
     }
 
     return HttpRequest.request(getNewURL(window.location.href, '/', uploadEndpoint), method: 'POST', requestHeaders: {
-      'FileName': fileName, 'FileSize': fileBytes.length
-    }, sendData: fileBytes).then((HttpRequest resp) => JSON.decode(resp.responseText));
+      'FileName': fileName, 'FileSize': fileBytes.length.toString()
+    }, sendData: fileBytes).then((HttpRequest resp) => jsonDecode(resp.responseText));
   }
 }
