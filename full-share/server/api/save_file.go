@@ -11,6 +11,7 @@ import (
 	"nick-anderssohn-website/full-share/server/serverutil"
 	"os"
 	"strconv"
+	"unicode"
 
 	"github.com/satori/go.uuid"
 )
@@ -60,7 +61,7 @@ func saveFile(writer http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	saveFileReq.FileName = req.Header.Get("FileName")
+	saveFileReq.FileName = sanitizeFileName(req.Header.Get("FileName"))
 
 	saveFileReq.Data, err = ioutil.ReadAll(req.Body)
 	if err != nil {
@@ -148,6 +149,18 @@ func sendJson(writer http.ResponseWriter, data interface{}) {
 
 func getUuid() string {
 	return uuid.Must(uuid.NewV4()).String()
+}
+
+func sanitizeFileName(fileName string) string {
+	chars := make([]rune, len(fileName), len(fileName))
+	for i, c := range fileName {
+		if unicode.IsLetter(c) || unicode.IsNumber(c) || c == '.' {
+			chars[i] = c
+		} else {
+			chars[i] = '_'
+		}
+	}
+	return string(chars)
 }
 
 func GetEndpoints() []*serverutil.Endpoint {
