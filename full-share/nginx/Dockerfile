@@ -1,11 +1,5 @@
-FROM nginx:latest
+FROM nginx:1.15.4-alpine
 
-# PROD
 COPY nginx.conf /etc/nginx/nginx.conf
-# PROD
-
-# DEV
-#COPY nginx.conf /etc/nginx/nginx.conf
-# DEV
 
 RUN mkdir -p /full-share/download

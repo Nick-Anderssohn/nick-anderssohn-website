@@ -12,3 +12,6 @@ data/
 pubspec.lock
 db_config.json
 .dart_tool
+*.lock
+vendor/
+*.pem

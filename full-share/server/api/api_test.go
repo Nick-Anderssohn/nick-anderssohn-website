@@ -1,10 +1,15 @@
 package api
 
 import (
-	"testing"
+	"bufio"
 	"fmt"
+	"os"
+	"testing"
 )
 
 func Test_makeUrl(t *testing.T) {
-	fmt.Println("chicken dinner")
+	w := bufio.NewWriterSize(os.Stdout, 1000)
+	fmt.Fprint(w, "Hello, ")
+	fmt.Fprint(w, "world!!!")
+	w.Flush() // Don't forget to flush!
 }

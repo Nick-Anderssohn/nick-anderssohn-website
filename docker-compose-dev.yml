@@ -18,18 +18,20 @@ services:
     restart: always
     environment:
      - WEBSITE_DOMAIN=localhost:8080
-     - WEBSITE_PROTOCOL=http://
+     - WEBSITE_PROTOCOL=https://
 
   full-share-nginx:
     depends_on:
       - file-manager
-    build: 'full-share/dev-nginx'
+    build:
+      context: full-share/nginx
+      dockerfile: Dockerfile-dev
     image: 'full-share-nginx'
     volumes:
      - ./full-share/web/build:/usr/share/nginx/html:ro
      - download-volume:/full-share/download:ro
     ports:
-     - '8080:80'
+     - '8080:443'
     restart: always
 
 volumes:

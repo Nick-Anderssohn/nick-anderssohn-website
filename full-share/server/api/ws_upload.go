@@ -1,0 +1,259 @@
+package api
+
+import (
+	"encoding/json"
+	"nick-anderssohn-website/full-share/server/db"
+
+	"fmt"
+	"log"
+	"net/http"
+	"net/url"
+	"nick-anderssohn-website/full-share/server/file"
+
+	"time"
+
+	"nick-anderssohn-website/full-share/server/serverutil"
+
+	"os"
+
+	"unicode"
+
+	"github.com/gorilla/websocket"
+	"github.com/satori/go.uuid"
+)
+
+/*
+A successful save file hand shake will look like the following:
+Client sends:
+    {
+        "FileSize": 1000,
+        "FileName": "Chicken Dinner"
+    }
+
+Server replies:
+	{
+        "StatusCode": 200,
+        "Message": ""
+    }
+
+Then in a loop until file size is reached:
+	Client sends file bytes.
+
+	Server replies with:
+		{
+			"StatusCode": 200,
+			"Message": ""
+    	}
+
+Then the server will finish up with:
+	{
+        "StatusCode": 200,
+        "Message": "The url here"
+    }
+
+At any point in time, the server might respond with status indicating an error code and message containing an
+error message.
+*/
+
+/*
+UploadSetupMsg is the json message sent from the browser with information about the file
+it would like to upload
+*/
+type UploadSetupMsg struct {
+	FileSize int    `json:"FileSize"`
+	FileName string `json:"FileName"`
+}
+
+/*
+WsResponse contains an http status code and a message
+*/
+type WsResponse struct {
+	StatusCode int    `json:"StatusCode"`
+	StatusMsg  string `json:"StatusMsg"`
+	Message    string `json:"Message"`
+}
+
+const (
+	downloadFile      = "/download"
+	fileFolderPath    = "download/"
+	wsReadMaxDuration = time.Minute * 60
+)
+
+var upgrader = websocket.Upgrader{}
+
+var domain string
+var protocol string
+
+func init() {
+	domain = os.Getenv("WEBSITE_DOMAIN")
+	protocol = os.Getenv("WEBSITE_PROTOCOL")
+}
+
+func recoverAndLog() {
+	if e := recover(); e != nil {
+		log.Println(e)
+	}
+}
+
+// Todo: Use correct status codes and better messages
+func saveViaWebsocket(w http.ResponseWriter, r *http.Request) {
+	defer recoverAndLog()
+
+	// Upgrade to a websocket connection
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println("failed to upgrade to ws conn ", err)
+		return
+	}
+	defer conn.Close() // Close ws connection on func return
+
+	// Handle setup messages
+	fileInfo, code, err := setupUpload(conn)
+	if err != nil {
+		writeMsgToWs(conn, 501, "", "Could not setup upload.")
+		return
+	}
+
+	// Format file name as download/code/fileName
+	folder := fmt.Sprintf("%s%s/", fileFolderPath, code)
+
+	// Open a file writer
+	fileWriter, err := file.NewFileWriter(fileInfo.FileSize, folder, fileInfo.FileName)
+
+	if err != nil {
+		log.Println("could not create file writer ", err)
+		writeMsgToWs(conn, 501, "", "Could not write file.")
+		return
+	}
+
+	defer fileWriter.Complete() // flush and close or handle a messed up write process on func return
+
+	bytesReceived := 0
+	for bytesReceived < fileInfo.FileSize {
+		// Read message
+		conn.SetReadDeadline(time.Now().Add(wsReadMaxDuration))
+		_, msgBytes, err := conn.ReadMessage()
+		if err != nil {
+			log.Println("failed to read message ", err)
+			writeMsgToWs(conn, 501, "", "Could not read message.")
+			return
+		}
+
+		// Record bytes received and write to file writer
+		bytesReceived += len(msgBytes)
+		_, err = fileWriter.Write(msgBytes)
+
+		if err != nil {
+			log.Println("failed to write to file ", err)
+			writeMsgToWs(conn, 501, "", "Could not write file.")
+			return
+		}
+
+		// tell client it is okay to continue
+		writeMsgToWs(conn, 200, "", "")
+	}
+
+	// If we received the correct number of bytes, then it was a success.
+	if bytesReceived == fileInfo.FileSize {
+		downloadLink := makeUrl(downloadFile, "/", code, "/", fileInfo.FileName)
+		writeMsgToWs(conn, 200, "", downloadLink)
+	} else {
+		writeMsgToWs(conn, 500, "", "Something went wrong.")
+	}
+}
+
+/*
+Reads the setup message from the websocket and returns file information, code, error
+*/
+func setupUpload(conn *websocket.Conn) (*UploadSetupMsg, string, error) {
+	// Receive the first message
+	conn.SetReadDeadline(time.Now().Add(wsReadMaxDuration))
+	_, msgBytes, err := conn.ReadMessage()
+	if err != nil {
+		return nil, "", err
+	}
+
+	// Unmarshal
+	var setupMsg UploadSetupMsg
+	err = json.Unmarshal(msgBytes, &setupMsg)
+	if err != nil {
+		return nil, "", err
+	}
+
+	setupMsg.FileName = sanitizeFileName(setupMsg.FileName)
+
+	// Get a code for it
+	code, err := getUuid()
+	if err != nil {
+		return nil, "", err
+	}
+
+	// Insert a record into the database
+	err = db.InsertNewFileInfo(code, setupMsg.FileName, setupMsg.FileSize)
+	if err != nil {
+		return nil, "", err
+	}
+
+	// Write success and return
+	writeMsgToWs(conn, 200, "", "")
+	return &setupMsg, code, nil
+}
+
+func writeMsgToWs(conn *websocket.Conn, statusCode int, statusMsg, message string) error {
+	return conn.WriteJSON(&WsResponse{
+		StatusCode: statusCode,
+		Message:    message,
+	})
+}
+
+func getUuid() (code string, err error) {
+	// Grab a code until an unused one is found
+	for retryCount, success, exists := 0, false, false; !success; retryCount++ {
+		code = uuid.NewV4().String()
+		success = true
+		exists, err = db.FileInfoExists(code)
+		if err != nil {
+			success = false
+		}
+
+		if exists {
+			success = false
+		}
+
+		// Stop after 10 retries
+		if retryCount >= 10 {
+			return "", fmt.Errorf("could not generate new code")
+		}
+	}
+	return
+}
+
+func GetEndpoints() []*serverutil.Endpoint {
+	return []*serverutil.Endpoint{
+		{
+			Path:       "/",
+			HandleFunc: saveViaWebsocket,
+		},
+	}
+}
+
+// Appends pathComponents to the end of "https://"+domain and percent encodes them
+func makeUrl(pathComponents ...string) string {
+	u, _ := url.Parse(protocol + domain)
+	for _, component := range pathComponents {
+		u.Path += component
+	}
+	return u.String()
+}
+
+func sanitizeFileName(fileName string) string {
+	chars := make([]rune, len(fileName), len(fileName))
+	for i, c := range fileName {
+		if unicode.IsLetter(c) || unicode.IsNumber(c) || c == '.' {
+			chars[i] = c
+		} else {
+			chars[i] = '_'
+		}
+	}
+	return string(chars)
+}

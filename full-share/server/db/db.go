@@ -42,6 +42,12 @@ CREATE TABLE IF NOT EXISTS files(
 );
 `
 
+	createUpgradesTableIfNotExists = `
+CREATE TABLE IF NOT EXISTS upgrades(
+  upgradeNumber INTEGER PRIMARY KEY
+);
+`
+
 	insertIntoFilesTableSQL = `
 INSERT INTO files
 VALUES ($1, $2, $3, $4);
@@ -60,6 +66,7 @@ func init() {
 		createDbIfNotExist()
 		connectToDb()
 		createTablesIfNotExists()
+		runUpgrades()
 	}
 }
 
@@ -104,6 +111,9 @@ func getConnStr(host, user, password, dbname string) string {
 
 func createTablesIfNotExists() {
 	if _, err := conn.Exec(createFilesTableIFNotExistsSql); err != nil {
+		panic(err.Error())
+	}
+	if _, err := conn.Exec(createUpgradesTableIfNotExists); err != nil {
 		panic(err.Error())
 	}
 }

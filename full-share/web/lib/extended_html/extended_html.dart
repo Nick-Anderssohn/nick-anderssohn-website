@@ -1,6 +1,11 @@
 library extended_html;
+
 import 'dart:html';
+import 'dart:async';
+import 'package:full_share/error/error.dart';
 export 'dart:html';
+
+part 'sub_cleaner.dart';
 
 /// [querySelector] except throws a [String] if the element could not be found.
 Element tryQuerySelector(String selectors) {
@@ -24,4 +29,13 @@ String getNewURL(String curURL, String curEndpoint, String newEndpoint) {
   var index = newURL.lastIndexOf(curEndpoint);
   newURL = newURL.substring(0, index);
   return newURL + newEndpoint;
+}
+
+dynamic parseJsonFromKey(Map jsonMap, dynamic key) {
+  var value = jsonMap[key];
+  if (value == null) {
+    throw LeveledException.Error('unable to parse $key from server response');
+  }
+
+  return value;
 }

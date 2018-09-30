@@ -3,6 +3,7 @@ library quickshare;
 import 'package:clippy/browser.dart' as clippy;
 import 'package:full_share/extended_html/extended_html.dart';
 import 'package:full_share/full_share/api_consumer/api_consumer.dart';
+import 'package:full_share/error/error.dart';
 
 class QuickShare {
   InputElement _fileInput;
@@ -10,7 +11,6 @@ class QuickShare {
   AnchorElement _sendBtn;
   DivElement _progContainer;
   AnchorElement _shareBtn;
-  FileReader _fileReader = new FileReader();
   DivElement _successfulContainer;
   ParagraphElement _linkElem;
 
@@ -37,17 +37,13 @@ class QuickShare {
   }
 
   void _setupHandlers() {
-    _fileReader.onLoad.listen(_handleLoadFile);
     _fileInput.onChange.listen(([_]) {
-      try {
-        if (_fileInput.files.length > 1) {
-          throw 'Please only select 1 file for upload.';
-        }
-        if (_fileInput.files.isNotEmpty) {
-          _fileReader.readAsArrayBuffer(_fileInput.files.first);
-        }
-      } catch (e) {
-        window.alert(e);
+      if (_fileInput.files.length > 1) {
+        window.alert('Please only select 1 file for upload.');
+        return;
+      }
+      if (_fileInput.files.isNotEmpty) {
+        _uploadViaWebsocket(_fileInput.files.first);
       }
     });
 
@@ -58,17 +54,37 @@ class QuickShare {
     });
   }
 
-  void _handleLoadFile(ProgressEvent e) {
+  void _uploadViaWebsocket(File file) {
+    var uploader = WsUploader.fromFile(file, onErrorMsg: _handleErrorMsg);
     showElem(_progContainer);
-    FullShareApiConsumer.requestUpload(_fileInput.files.first.name, _fileReader.result).then(_handleUploadResp).catchError(print).whenComplete(([_]) => hideElem(_progContainer));
+    uploader
+        .readAndUpload()
+        .then(_handleWsUploadResp)
+        .catchError(_handleGenericError)
+        .whenComplete(() => _handleUploadComplete(uploader));
   }
 
-  void _handleUploadResp(Map responseJson) {
-    if (responseJson['Success']) {
-      showElem(_successfulContainer);
-      _linkElem.text = responseJson['DownloadLink'];
-      _sendBtn.href = _getSMSHref();
+  void _handleUploadComplete(WsUploader uploader) {
+    uploader.cleanup();
+    hideElem(_progContainer);
+  }
+
+  void _handleGenericError(dynamic error, [dynamic stackTrace]) {
+    print('$error: $stackTrace');
+    if (error is UserFacingMessage && error.hasUserFacingMessage()) {
+      window.alert(error.getUserFacingMessage());
     }
+  }
+
+  void _handleErrorMsg(Map errorMsg) {
+    hideElem(_progContainer);
+    window.alert('Upload failed');
+  }
+
+  void _handleWsUploadResp(String downloadUrl) {
+    showElem(_successfulContainer);
+    _linkElem.text = downloadUrl;
+    _sendBtn.href = _getSMSHref();
   }
 
   String _getSMSHref() {
