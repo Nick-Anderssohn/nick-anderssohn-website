@@ -61,12 +61,7 @@ class QuickShare {
         .readAndUpload()
         .then(_handleWsUploadResp)
         .catchError(_handleGenericError)
-        .whenComplete(() => _handleUploadComplete(uploader));
-  }
-
-  void _handleUploadComplete(WsUploader uploader) {
-    uploader.cleanup();
-    hideElem(_progContainer);
+        .whenComplete(() => hideElem(_progContainer));
   }
 
   void _handleGenericError(dynamic error, [dynamic stackTrace]) {

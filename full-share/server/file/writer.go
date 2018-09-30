@@ -19,7 +19,7 @@ type FileWriter struct {
 NewFileWriter returns a new file writer. If the file already exists, or it fails to make a new one,
 an error will be returned.
 */
-func NewFileWriter(targetFileSize int, folder, fileName string) (*FileWriter, error) {
+func NewFileWriter(targetFileSize, writerBufSize int, folder, fileName string) (*FileWriter, error) {
 	if folder[len(folder)-1] != '/' {
 		folder += "/"
 	}
@@ -37,7 +37,7 @@ func NewFileWriter(targetFileSize int, folder, fileName string) (*FileWriter, er
 	return &FileWriter{
 		TargetFileSize: targetFileSize,
 		f:              f,
-		writer:         bufio.NewWriter(f),
+		writer:         bufio.NewWriterSize(f, writerBufSize),
 		filePath:       filePath,
 	}, nil
 }

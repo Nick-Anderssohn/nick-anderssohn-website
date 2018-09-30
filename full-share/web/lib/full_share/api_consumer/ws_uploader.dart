@@ -17,11 +17,11 @@ Server replies:
 Then in a loop until file size is reached:
 	Client sends file bytes.
 
-	Server replies with:
-		{
-			"Status": 200,
-			"Message": ""
-    	}
+	Server responds with:
+	{
+        "Status": 200,
+        "Message": ""
+    }
 
 Then the server will finish up with:
 	{
@@ -38,7 +38,7 @@ error message.
 /// If a new upload is needed, a new [WsUploader] must be created.
 class WsUploader extends SubCleaner {
   static const String uploadEndpoint = '/upload';
-  static const int _sliceSize = 1024 * 1024 * 20; // 20 MiB
+  static const int _sliceSize = 1024 * 1024 * 10; // 10 MiB
 
   final File _file;
   WebSocket _ws;
@@ -69,7 +69,7 @@ class WsUploader extends SubCleaner {
   }
 
   /// Waits a max of [maxSecondsToWait] for the websocket connection to open. If it fails to open,
-  /// a [TimeoutException] is thrown.
+  /// a [LeveledException] with an OpsError level is thrown.
   Future<Null> _waitForOpenConn({int maxSecondsToWait = 3}) async {
     int numMilliPerTry = 50;
     int maxTries = maxSecondsToWait * Duration.millisecondsPerSecond ~/ numMilliPerTry;
@@ -100,14 +100,19 @@ class WsUploader extends SubCleaner {
     _ws.sendString(firstMessage);
   }
 
-  /// Checks the response from the server and either triggers the next slice upload or completes the overall upload.
+  /// Checks the response from the server and either starts or completes the upload. Completion can
+  /// result in either successfully returning the link to the file or handling an error msg.
   void _handleServerResponse(MessageEvent msgEvent) {
     Map serverResponse = jsonDecode(msgEvent.data);
+
+    // Check if server response indicates success.
     if (_UploadRespParseUtil.getStatusCode(serverResponse) == _Status.ok) {
+      // Process final message if we are done uploading, otherwise start uploading.
       if (_doneUploading()) {
         String link = _UploadRespParseUtil.getMessage(serverResponse);
         if (link.isNotEmpty) {
           _downloadLinkCompleter.complete(link);
+          cleanup();
         }
       } else {
         _sendNextFileSlice();

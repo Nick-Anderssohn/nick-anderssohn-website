@@ -8,8 +8,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"nick-anderssohn-website/full-share/server/file"
-
 	"time"
 
 	"nick-anderssohn-website/full-share/server/serverutil"
@@ -39,11 +37,12 @@ Server replies:
 Then in a loop until file size is reached:
 	Client sends file bytes.
 
-	Server replies with:
-		{
-			"StatusCode": 200,
-			"Message": ""
-    	}
+	The server responds with
+	{
+        "StatusCode": 200,
+        "Message": ""
+    }
+
 
 Then the server will finish up with:
 	{
@@ -77,6 +76,7 @@ const (
 	downloadFile      = "/download"
 	fileFolderPath    = "download/"
 	wsReadMaxDuration = time.Minute * 60
+	maxWriterBufSize  = 1024 * 1024 // 10 MiB
 )
 
 var upgrader = websocket.Upgrader{}
@@ -118,18 +118,28 @@ func saveViaWebsocket(w http.ResponseWriter, r *http.Request) {
 	folder := fmt.Sprintf("%s%s/", fileFolderPath, code)
 
 	// Open a file writer
-	fileWriter, err := file.NewFileWriter(fileInfo.FileSize, folder, fileInfo.FileName)
+	bufSize := maxWriterBufSize
+	if bufSize > fileInfo.FileSize {
+		bufSize = fileInfo.FileSize
+	}
 
+	processor, err := newUploadProcessor(conn, fileInfo.FileSize, bufSize, folder, fileInfo.FileName)
 	if err != nil {
-		log.Println("could not create file writer ", err)
 		writeMsgToWs(conn, 501, "", "Could not write file.")
 		return
 	}
 
-	defer fileWriter.Complete() // flush and close or handle a messed up write process on func return
+	defer processor.fileWriter.Complete() // flush and close or handle a messed up write process on func return
+	processor.Processor.DoneChan = make(chan bool)
 
 	bytesReceived := 0
 	for bytesReceived < fileInfo.FileSize {
+		if processor.Processor.Stopped {
+			log.Println("failed to write to file ", err)
+			writeMsgToWs(conn, 501, "", "Could not write file.")
+			return
+		}
+
 		// Read message
 		conn.SetReadDeadline(time.Now().Add(wsReadMaxDuration))
 		_, msgBytes, err := conn.ReadMessage()
@@ -139,19 +149,14 @@ func saveViaWebsocket(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		processor.Processor.Push(msgBytes)
+		writeMsgToWs(conn, 200, "", "")
+
 		// Record bytes received and write to file writer
 		bytesReceived += len(msgBytes)
-		_, err = fileWriter.Write(msgBytes)
-
-		if err != nil {
-			log.Println("failed to write to file ", err)
-			writeMsgToWs(conn, 501, "", "Could not write file.")
-			return
-		}
-
-		// tell client it is okay to continue
-		writeMsgToWs(conn, 200, "", "")
 	}
+
+	<-processor.Processor.DoneChan
 
 	// If we received the correct number of bytes, then it was a success.
 	if bytesReceived == fileInfo.FileSize {
@@ -189,6 +194,7 @@ func setupUpload(conn *websocket.Conn) (*UploadSetupMsg, string, error) {
 	}
 
 	// Insert a record into the database
+	// TODO: Remove db entry on botched upload.
 	err = db.InsertNewFileInfo(code, setupMsg.FileName, setupMsg.FileSize)
 	if err != nil {
 		return nil, "", err
