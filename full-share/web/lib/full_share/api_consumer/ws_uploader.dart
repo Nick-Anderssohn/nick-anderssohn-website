@@ -38,7 +38,7 @@ error message.
 /// If a new upload is needed, a new [WsUploader] must be created.
 class WsUploader extends SubCleaner {
   static const String uploadEndpoint = '/upload';
-  static const int _sliceSize = 1024 * 1024 * 10; // 10 MiB
+  static const int _sliceSize = 1024 * 1024; // 1 MiB
 
   final File _file;
   WebSocket _ws;

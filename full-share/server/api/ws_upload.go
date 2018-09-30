@@ -76,7 +76,7 @@ const (
 	downloadFile      = "/download"
 	fileFolderPath    = "download/"
 	wsReadMaxDuration = time.Minute * 60
-	maxWriterBufSize  = 1024 * 1024 // 10 MiB
+	maxWriterBufSize  = 1024 * 1024 // 1 MiB
 )
 
 var upgrader = websocket.Upgrader{}
