@@ -6,7 +6,7 @@ WORKDIR /go/src/nick-anderssohn-website/full-share/server
 COPY . .
 RUN CGO_ENABLED=0 go build -a -ldflags '-extldflags "-static"' .
 
-FROM alpine
+FROM alpine:3.8
 RUN mkdir download
 COPY --from=builder /go/src/nick-anderssohn-website/full-share/server/server .
 COPY --from=builder /go/src/nick-anderssohn-website/full-share/server/db_config.json .
