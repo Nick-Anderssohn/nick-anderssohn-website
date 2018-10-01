@@ -59,6 +59,9 @@ class WsUploader extends SubCleaner {
     _ws = WebSocket(url);
     addSub(_ws.onOpen.listen((_) => _connected = true));
     addSub(_ws.onError.listen((e) => window.alert(e.toString())));
+    addSub(_ws.onClose.listen(
+      (_) => window.alert('Error: Connection closed before upload could complete.'),
+    ));
   }
 
   /// Reads [_file] and simultaneously uploads it to full share.
