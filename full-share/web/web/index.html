@@ -23,9 +23,9 @@
     <a id="share-btn" class="waves-effect waves-light btn-large"><i class="material-icons left">file_upload</i>Share File</a>
     <div style="height: 10px;"></div>
     <div id="prog-container" style="display: none;">
-        <p>Uploading...</p>
+        <p id="uploading-msg">Uploading...</p>
         <div class="progress">
-            <div class="indeterminate"></div>
+            <div id="prog-bar" class="determinate" style="width: 0"></div>
         </div>
     </div>
     <div id="successful-container" style="display: none;">

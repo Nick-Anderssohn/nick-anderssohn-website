@@ -45,10 +45,11 @@ class WsUploader extends SubCleaner {
   final Completer<String> _downloadLinkCompleter = Completer();
   int _bytesSent = 0;
   bool _connected = false;
-  Function onErrorMsg; // Must accept a map as it's only argument
+  Function onErrorMsg; // void func(Map)
+  Function onProgress; // void func(double)
 
   /// Create a [WsUploader] set to read and upload [_file].
-  WsUploader.fromFile(this._file, {this.onErrorMsg}) {
+  WsUploader.fromFile(this._file, {this.onErrorMsg, this.onProgress}) {
     String url = '';
     if (window.location.protocol == 'https:') {
       url = getNewURL(window.location.href, '/', uploadEndpoint).replaceFirst('https', 'wss');
@@ -115,6 +116,7 @@ class WsUploader extends SubCleaner {
           cleanup();
         }
       } else {
+        onProgress?.call(_bytesSent / _file.size * 100.0);
         _sendNextFileSlice();
       }
     } else {

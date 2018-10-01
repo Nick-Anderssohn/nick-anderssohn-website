@@ -1,5 +1,6 @@
 library quickshare;
 
+import 'package:intl/intl.dart';
 import 'package:clippy/browser.dart' as clippy;
 import 'package:full_share/extended_html/extended_html.dart';
 import 'package:full_share/full_share/api_consumer/api_consumer.dart';
@@ -10,6 +11,8 @@ class QuickShare {
   AnchorElement _copyBtn;
   AnchorElement _sendBtn;
   DivElement _progContainer;
+  DivElement _progBar;
+  ParagraphElement _uploadingMsg;
   AnchorElement _shareBtn;
   DivElement _successfulContainer;
   ParagraphElement _linkElem;
@@ -31,6 +34,8 @@ class QuickShare {
     _copyBtn = tryQuerySelector('#copy-btn');
     _sendBtn = tryQuerySelector('#send-btn');
     _progContainer = tryQuerySelector('#prog-container');
+    _progBar = tryQuerySelector('#prog-bar');
+    _uploadingMsg = tryQuerySelector('#uploading-msg');
     _shareBtn = tryQuerySelector('#share-btn');
     _successfulContainer = tryQuerySelector('#successful-container');
     _linkElem = tryQuerySelector('#link');
@@ -55,7 +60,8 @@ class QuickShare {
   }
 
   void _uploadViaWebsocket(File file) {
-    var uploader = WsUploader.fromFile(file, onErrorMsg: _handleErrorMsg);
+    var uploader =
+        WsUploader.fromFile(file, onErrorMsg: _handleErrorMsg, onProgress: _handleProgress);
     showElem(_progContainer);
     uploader
         .readAndUpload()
@@ -74,6 +80,11 @@ class QuickShare {
   void _handleErrorMsg(Map errorMsg) {
     hideElem(_progContainer);
     window.alert('Upload failed');
+  }
+
+  void _handleProgress(double percentage) {
+    _progBar.style.width = '$percentage%';
+    _uploadingMsg.text = 'Uploading... ${NumberFormat('###', "en_US").format(percentage)}%';
   }
 
   void _handleWsUploadResp(String downloadUrl) {
