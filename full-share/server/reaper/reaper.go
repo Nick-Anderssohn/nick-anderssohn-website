@@ -8,6 +8,14 @@ import (
 	"time"
 )
 
+// ReapEvery24Hours will delete files older than 2 days every 24 hours
+func ReapEvery24Hours() {
+	for {
+		reap()
+		time.Sleep(24 * time.Hour)
+	}
+}
+
 func deleteFile(code string) (err error) {
 	_, err = os.Stat(file.GetPath(code))
 	if err != nil {
@@ -29,12 +37,5 @@ func reap() {
 		if err != nil {
 			log.Println("could not delete file ", err)
 		}
-	}
-}
-
-func ReapEvery48Hours() {
-	for {
-		reap()
-		time.Sleep(48 * time.Hour)
 	}
 }

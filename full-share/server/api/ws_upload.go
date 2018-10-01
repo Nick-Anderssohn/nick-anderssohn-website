@@ -214,10 +214,10 @@ func writeMsgToWs(conn *websocket.Conn, statusCode int, statusMsg, message strin
 
 func getUuid() (code string, err error) {
 	// Grab a code until an unused one is found
-	for retryCount, success, exists := 0, false, false; !success; retryCount++ {
+	for retryCount, success := 0, false; !success; retryCount++ {
 		code = uuid.NewV4().String()
 		success = true
-		exists, err = db.FileInfoExists(code)
+		exists, err := db.FileInfoExists(code)
 		if err != nil {
 			success = false
 		}
@@ -234,6 +234,7 @@ func getUuid() (code string, err error) {
 	return
 }
 
+// GetEndpoints returns all the endpoints for the full share server.
 func GetEndpoints() []*serverutil.Endpoint {
 	return []*serverutil.Endpoint{
 		{

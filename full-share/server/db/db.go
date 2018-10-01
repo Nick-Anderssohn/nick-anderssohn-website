@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	// Blank import required by PostgreSQL driver.
 	_ "github.com/lib/pq"
 )
 
@@ -25,6 +26,7 @@ var config dbConfig
 
 const dbConfigPath = "db_config.json"
 
+// FileInfo contains the information associated with a file entry in the files database.
 type FileInfo struct {
 	Code       string
 	Name       string
@@ -125,7 +127,7 @@ func InsertNewFileInfo(code, name string, fileSize int) (err error) {
 	return
 }
 
-// Returns a file info based off of code
+// SelectFileInfo returns a file info based off of code
 func SelectFileInfo(code string) (fileInfo *FileInfo, err error) {
 	fileInfo = &FileInfo{}
 	row := conn.QueryRow(selectFileInfoSql, code)

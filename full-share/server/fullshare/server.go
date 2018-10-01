@@ -5,6 +5,7 @@ import (
 	"nick-anderssohn-website/full-share/server/serverutil"
 )
 
+// Server is a simple http server with all the endpoints for nickanderssohn.com
 type Server struct {
 	serverutil.Server
 }

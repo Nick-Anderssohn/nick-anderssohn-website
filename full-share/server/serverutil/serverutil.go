@@ -1,4 +1,3 @@
-// Package rest contains a basic rest server
 package serverutil
 
 import (
@@ -9,7 +8,7 @@ import (
 
 // Endpoint wraps a path and a HandlerFunc
 type Endpoint struct {
-	Path    string
+	Path       string
 	HandleFunc http.HandlerFunc
 }
 

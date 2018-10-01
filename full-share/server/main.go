@@ -10,7 +10,7 @@ import (
 func main() {
 	if config.ApplicationConfig.RunReaper {
 		fmt.Println("Starting reaper...")
-		go reaper.ReapEvery48Hours()
+		go reaper.ReapEvery24Hours()
 	}
 
 	server := fullshare.NewServer("0.0.0.0", "8080")
