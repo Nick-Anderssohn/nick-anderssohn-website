@@ -1,4 +1,4 @@
-package http_util
+package httputil
 
 // StatusCode contains the int and string associated with an http status Status (i.e. 200 OK)
 type StatusCode struct {
@@ -6,6 +6,7 @@ type StatusCode struct {
 	Msg  string
 }
 
+// GetCodeAndMsg returns both the code and msg
 func (s *StatusCode) GetCodeAndMsg() (int, string) {
 	return s.Code, s.Msg
 }
