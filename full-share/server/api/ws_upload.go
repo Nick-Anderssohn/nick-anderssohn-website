@@ -130,7 +130,7 @@ func saveViaWebsocket(w http.ResponseWriter, r *http.Request) {
 
 	processor, err := newUploadProcessor(conn, fileInfo.FileSize, bufSize, folder, fileInfo.FileName)
 	if err != nil {
-		writeMsgToWs(conn, http_util.Status500InternalServerError.Code, http_util.Status500InternalServerError.Msg, "Could not write file.")
+		writeMsgToWs(conn, http_util.InternalServerError.Code, http_util.InternalServerError.Msg, "Could not write file.")
 		return
 	}
 
@@ -141,7 +141,7 @@ func saveViaWebsocket(w http.ResponseWriter, r *http.Request) {
 	for bytesReceived < fileInfo.FileSize {
 		if processor.Processor.Stopped {
 			log.Println("failed to write to file ", err)
-			writeMsgToWs(conn, http_util.Status500InternalServerError.Code, http_util.Status500InternalServerError.Msg, "Could not write file.")
+			writeMsgToWs(conn, http_util.InternalServerError.Code, http_util.InternalServerError.Msg, "Could not write file.")
 			return
 		}
 
@@ -150,12 +150,12 @@ func saveViaWebsocket(w http.ResponseWriter, r *http.Request) {
 		_, msgBytes, err := conn.ReadMessage()
 		if err != nil {
 			log.Println("failed to read message ", err)
-			writeMsgToWs(conn, http_util.Status500InternalServerError.Code, http_util.Status500InternalServerError.Msg, "Could not read message.")
+			writeMsgToWs(conn, http_util.InternalServerError.Code, http_util.InternalServerError.Msg, "Could not read message.")
 			return
 		}
 
 		processor.Processor.Push(msgBytes)
-		writeMsgToWs(conn, http_util.Status200Ok.Code, http_util.Status200Ok.Msg, "")
+		writeMsgToWs(conn, http_util.Ok.Code, http_util.Ok.Msg, "")
 
 		// Record bytes received and write to file writer
 		bytesReceived += len(msgBytes)
@@ -166,9 +166,9 @@ func saveViaWebsocket(w http.ResponseWriter, r *http.Request) {
 	// If we received the correct number of bytes, then it was a success.
 	if bytesReceived == fileInfo.FileSize {
 		downloadLink := makeUrl(downloadFile, "/", code, "/", fileInfo.FileName)
-		writeMsgToWs(conn, http_util.Status200Ok.Code, http_util.Status200Ok.Msg, downloadLink)
+		writeMsgToWs(conn, http_util.Ok.Code, http_util.Ok.Msg, downloadLink)
 	} else {
-		writeMsgToWs(conn, http_util.Status500InternalServerError.Code, http_util.Status500InternalServerError.Msg, "Something went wrong.")
+		writeMsgToWs(conn, http_util.InternalServerError.Code, http_util.InternalServerError.Msg, "Something went wrong.")
 	}
 }
 
@@ -180,14 +180,14 @@ func setupUpload(conn *websocket.Conn) (*UploadSetupMsg, string, *http_util.ErrW
 	conn.SetReadDeadline(time.Now().Add(wsReadMaxDuration))
 	_, msgBytes, err := conn.ReadMessage()
 	if err != nil {
-		return nil, "", &http_util.ErrWithStatus{Status: http_util.Status500InternalServerError, Err: err}
+		return nil, "", &http_util.ErrWithStatus{Status: http_util.InternalServerError, Err: err}
 	}
 
 	// Unmarshal
 	var setupMsg UploadSetupMsg
 	err = json.Unmarshal(msgBytes, &setupMsg)
 	if err != nil {
-		return nil, "", &http_util.ErrWithStatus{Status: http_util.Status400BadRequest, Err: err}
+		return nil, "", &http_util.ErrWithStatus{Status: http_util.BadRequest, Err: err}
 	}
 
 	setupMsg.FileName = sanitizeFileName(setupMsg.FileName)
@@ -195,18 +195,18 @@ func setupUpload(conn *websocket.Conn) (*UploadSetupMsg, string, *http_util.ErrW
 	// Get a code for it
 	code, err := getUuid()
 	if err != nil {
-		return nil, "", &http_util.ErrWithStatus{Status: http_util.Status500InternalServerError, Err: err}
+		return nil, "", &http_util.ErrWithStatus{Status: http_util.InternalServerError, Err: err}
 	}
 
 	// Insert a record into the database
 	// TODO: Remove db entry on botched upload.
 	err = db.InsertNewFileInfo(code, setupMsg.FileName, setupMsg.FileSize)
 	if err != nil {
-		return nil, "", &http_util.ErrWithStatus{Status: http_util.Status500InternalServerError, Err: err}
+		return nil, "", &http_util.ErrWithStatus{Status: http_util.InternalServerError, Err: err}
 	}
 
 	// Write success and return
-	writeMsgToWs(conn, http_util.Status200Ok.Code, http_util.Status200Ok.Msg, "")
+	writeMsgToWs(conn, http_util.Ok.Code, http_util.Ok.Msg, "")
 	return &setupMsg, code, nil
 }
 

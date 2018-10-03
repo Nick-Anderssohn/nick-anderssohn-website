@@ -15,25 +15,25 @@ var (
 	// ************ 2xx Success ************
 
 	/*
-		Status200Ok is the standard response for successful HTTP requests.
+		Ok is the standard response for successful HTTP requests.
 	*/
-	Status200Ok = StatusCode{200, "Ok"}
+	Ok = StatusCode{200, "Ok"}
 
 	// ************ 4xx Client errors ************
 
 	/*
-		Status400BadRequest is the Status when the server cannot or will not process the request due to an apparent client
+		BadRequest is the Status when the server cannot or will not process the request due to an apparent client
 		error (e.g., malformed request syntax, size too large, invalid request message framing, or deceptive request routing).
 	*/
-	Status400BadRequest = StatusCode{400, "Bad Request"}
+	BadRequest = StatusCode{400, "Bad Request"}
 
 	// ************ 5xx Server errors ************
 
 	/*
-		Status500InternalServerError is a generic error message, given when an unexpected condition
+		InternalServerError is a generic error message, given when an unexpected condition
 		was encountered and no more specific message is suitable.
 	*/
-	Status500InternalServerError = StatusCode{500, "Internal Server Error"}
+	InternalServerError = StatusCode{500, "Internal Server Error"}
 )
 
 /*
