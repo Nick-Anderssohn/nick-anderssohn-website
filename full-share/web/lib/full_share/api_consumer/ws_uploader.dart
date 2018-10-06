@@ -12,7 +12,7 @@ Server replies:
 	{
         "Status": 200,
         "Message": ""
-  }
+    }
 
 Then in a loop until file size is reached:
 	Client sends file bytes.
@@ -38,7 +38,7 @@ error message.
 /// If a new upload is needed, a new [WsUploader] must be created.
 class WsUploader extends SubCleaner {
   static const String uploadEndpoint = '/upload';
-  static const int _sliceSize = 1024 * 1024; // 1 MiB
+  static const int _sliceSize = 1024 * 1024 * 5; // 5 MiB
 
   final File _file;
   WebSocket _ws;
