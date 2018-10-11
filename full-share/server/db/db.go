@@ -58,6 +58,8 @@ VALUES ($1, $2, $3, $4);
 	selectFileInfoSql = `SELECT * FROM files WHERE code = $1;`
 
 	deleteOlderThan = `DELETE FROM files WHERE date_part('day', age($1, uploadedOn)) >= $2 RETURNING code;`
+
+	deleteFromCode = `DELETE FROM files WHERE code = $1;`
 )
 
 var conn *sql.DB
@@ -163,4 +165,10 @@ func DeleteFilesOlderThan(days int) (codes []string, err error) {
 		codes = append(codes, code)
 	}
 	return
+}
+
+// DeleteDbEntryFromCode deletes the entry in the database with the matching code.
+func DeleteDbEntryFromCode(code string) error {
+	_, err := conn.Exec(deleteFromCode, code)
+	return err
 }

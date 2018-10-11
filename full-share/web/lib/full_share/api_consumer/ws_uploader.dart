@@ -38,6 +38,7 @@ error message.
 /// If a new upload is needed, a new [WsUploader] must be created.
 class WsUploader extends SubCleaner {
   static const String uploadEndpoint = '/upload';
+  static const int maxFileSize = 1024 * 1024 * 1024 * 5; // 5 GiB;
   static const int _sliceSize = 1024 * 1024 * 5; // 5 MiB
 
   final File _file;
@@ -50,6 +51,13 @@ class WsUploader extends SubCleaner {
 
   /// Create a [WsUploader] set to read and upload [_file].
   WsUploader.fromFile(this._file, {this.onErrorMsg, this.onProgress}) {
+    if (_file.size > maxFileSize) {
+      throw LeveledException.Warning('file too large')
+        ..attachedStackTrace = StackTrace.current
+        ..userFacingMessage =
+            'File too large. Provided file size: ${_file.size} bytes. Max file size: ${maxFileSize} bytes.';
+    }
+
     String url = '';
     if (window.location.protocol == 'https:') {
       url = getNewURL(window.location.href, '/', uploadEndpoint).replaceFirst('https', 'wss');

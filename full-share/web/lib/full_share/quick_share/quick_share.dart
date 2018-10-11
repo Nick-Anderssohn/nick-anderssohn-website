@@ -60,8 +60,15 @@ class QuickShare {
   }
 
   void _uploadViaWebsocket(File file) {
-    var uploader =
-        WsUploader.fromFile(file, onErrorMsg: _handleErrorMsg, onProgress: _handleProgress);
+    WsUploader uploader;
+    try {
+      uploader =
+          WsUploader.fromFile(file, onErrorMsg: _handleErrorMsg, onProgress: _handleProgress);
+    } on LeveledException catch (e) {
+      _handleGenericError(e, e.attachedStackTrace);
+      return;
+    }
+
     showElem(_progContainer);
     uploader
         .readAndUpload()

@@ -81,7 +81,8 @@ const (
 	downloadFile      = "/download"
 	fileFolderPath    = "download/"
 	wsReadMaxDuration = time.Minute * 60
-	maxWriterBufSize  = 1024 * 1024 // 1 MiB
+	maxWriterBufSize  = 1024 * 1024            // 1 MiB
+	maxFileSize       = 1024 * 1024 * 1024 * 5 // 5 GiB
 )
 
 var upgrader = websocket.Upgrader{}
@@ -100,7 +101,6 @@ func recoverAndLog() {
 	}
 }
 
-// Todo: Use correct status codes and better messages
 func saveViaWebsocket(w http.ResponseWriter, r *http.Request) {
 	defer recoverAndLog()
 
@@ -128,6 +128,7 @@ func saveViaWebsocket(w http.ResponseWriter, r *http.Request) {
 		bufSize = fileInfo.FileSize
 	}
 
+	// Create the processor that will be used to write the file to disk
 	processor, err := newUploadProcessor(conn, fileInfo.FileSize, bufSize, folder, fileInfo.FileName)
 	if err != nil {
 		writeMsgToWs(conn, httputil.InternalServerError.Code, httputil.InternalServerError.Msg, "Could not write file.")
@@ -138,6 +139,17 @@ func saveViaWebsocket(w http.ResponseWriter, r *http.Request) {
 	processor.Processor.DoneChan = make(chan bool)
 
 	bytesReceived := 0
+
+	// Defer a check to remove bad database entries
+	defer func() {
+		if bytesReceived != fileInfo.FileSize {
+			err := db.DeleteDbEntryFromCode(code)
+			if err != nil {
+				log.Println("failed to delete db entry for code ", code)
+			}
+		}
+	}()
+
 	for bytesReceived < fileInfo.FileSize {
 		if processor.Processor.Stopped {
 			log.Println("failed to write to file ", err)
@@ -173,7 +185,7 @@ func saveViaWebsocket(w http.ResponseWriter, r *http.Request) {
 }
 
 /*
-Reads the setup message from the websocket and returns file information, code, error
+Reads the setup message from the websocket and returns file information, code, error.
 */
 func setupUpload(conn *websocket.Conn) (*UploadSetupMsg, string, *httputil.ErrWithStatus) {
 	// Receive the first message
@@ -190,6 +202,13 @@ func setupUpload(conn *websocket.Conn) (*UploadSetupMsg, string, *httputil.ErrWi
 		return nil, "", &httputil.ErrWithStatus{Status: httputil.BadRequest, Err: err}
 	}
 
+	if setupMsg.FileSize > maxFileSize {
+		return nil, "", &httputil.ErrWithStatus{
+			Status: httputil.BadRequest,
+			Err:    fmt.Errorf("file too large. max allowed file size: %d bytes. provided file size: %d bytes", maxFileSize, setupMsg.FileSize),
+		}
+	}
+
 	setupMsg.FileName = sanitizeFileName(setupMsg.FileName)
 
 	// Get a code for it
@@ -199,7 +218,6 @@ func setupUpload(conn *websocket.Conn) (*UploadSetupMsg, string, *httputil.ErrWi
 	}
 
 	// Insert a record into the database
-	// TODO: Remove db entry on botched upload.
 	err = db.InsertNewFileInfo(code, setupMsg.FileName, setupMsg.FileSize)
 	if err != nil {
 		return nil, "", &httputil.ErrWithStatus{Status: httputil.InternalServerError, Err: err}
