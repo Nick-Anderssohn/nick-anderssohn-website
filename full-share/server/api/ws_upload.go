@@ -115,6 +115,9 @@ func saveViaWebsocket(w http.ResponseWriter, r *http.Request) {
 	// Handle setup messages
 	fileInfo, code, errWithCode := setupUpload(conn)
 	if errWithCode != nil {
+		if code != "" {
+			deleteCodeFromDb(code)
+		}
 		writeMsgToWs(conn, errWithCode.Status.Code, errWithCode.Status.Msg, "Could not setup upload.")
 		return
 	}
@@ -143,10 +146,7 @@ func saveViaWebsocket(w http.ResponseWriter, r *http.Request) {
 	// Defer a check to remove bad database entries
 	defer func() {
 		if bytesReceived != fileInfo.FileSize {
-			err := db.DeleteDbEntryFromCode(code)
-			if err != nil {
-				log.Println("failed to delete db entry for code ", code)
-			}
+			deleteCodeFromDb(code)
 		}
 	}()
 
@@ -220,7 +220,7 @@ func setupUpload(conn *websocket.Conn) (*UploadSetupMsg, string, *httputil.ErrWi
 	// Insert a record into the database
 	err = db.InsertNewFileInfo(code, setupMsg.FileName, setupMsg.FileSize)
 	if err != nil {
-		return nil, "", &httputil.ErrWithStatus{Status: httputil.InternalServerError, Err: err}
+		return nil, code, &httputil.ErrWithStatus{Status: httputil.InternalServerError, Err: err}
 	}
 
 	// Write success and return
@@ -256,6 +256,13 @@ func getUuid() (code string, err error) {
 		}
 	}
 	return
+}
+
+func deleteCodeFromDb(code string) {
+	err := db.DeleteDbEntryFromCode(code)
+	if err != nil {
+		log.Println("failed to delete db entry for code ", code)
+	}
 }
 
 // GetEndpoints returns all the endpoints for the full share server.
