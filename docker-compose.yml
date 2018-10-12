@@ -15,6 +15,7 @@ services:
     image: 'full-share-file-manager'
     volumes:
      - download-volume:/download
+     - ./logs:/logs
     restart: always
     environment:
      - WEBSITE_DOMAIN=nickanderssohn.com

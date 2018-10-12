@@ -15,3 +15,4 @@ db_config.json
 *.lock
 vendor/
 *.pem
+*.log
