@@ -103,7 +103,7 @@ func saveViaWebsocket(w http.ResponseWriter, r *http.Request) {
 	// Upgrade to a websocket connection
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		slog.Logger.Warn("failed to upgrade to ws conn ", err)
+		slog.Logger.Warn("failed to upgrade to ws conn: ", err)
 		return
 	}
 	defer conn.Close() // Close ws connection on func return
@@ -159,7 +159,7 @@ func saveViaWebsocket(w http.ResponseWriter, r *http.Request) {
 		conn.SetReadDeadline(time.Now().Add(wsReadMaxDuration))
 		_, msgBytes, err := conn.ReadMessage()
 		if err != nil {
-			slog.Logger.Warn("failed to read message ", err)
+			slog.Logger.Warn("failed to read message: ", err)
 			writeMsgToWs(conn, httputil.InternalServerError.Code, httputil.InternalServerError.Msg, "Could not read message.")
 			return
 		}
