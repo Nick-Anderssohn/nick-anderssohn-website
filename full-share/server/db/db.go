@@ -2,15 +2,15 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
-
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	cfg "nick-anderssohn-website/full-share/server/config"
+	"nick-anderssohn-website/full-share/server/slog"
 	"strings"
-	"time"
+	"time" // Blank import required by PostgreSQL driver.
 
-	// Blank import required by PostgreSQL driver.
+	"github.com/Nick-Anderssohn/sherlog"
 	_ "github.com/lib/pq"
 )
 
@@ -87,6 +87,7 @@ func connectToDb() {
 	var err error
 	connStr := getConnStr(config.Host, config.Username, config.Password, config.DbName)
 	if conn, err = sql.Open("postgres", connStr); err != nil {
+		slog.Logger.OpsError("could not connect to database: ", err)
 		panic(err)
 	}
 }
@@ -96,12 +97,13 @@ func createDbIfNotExist() {
 	connStr := getConnStr(config.Host, "postgres", config.PostgresPassword, "postgres")
 	postgresConn, err := sql.Open("postgres", connStr)
 	if err != nil {
+		slog.Logger.OpsError("could not connect to database: ", err)
 		panic(err)
 	}
 	rows := postgresConn.QueryRow(fmt.Sprintf("SELECT COUNT(*) FROM pg_database WHERE datname = '%s'", config.DbName))
 	rows.Scan(&count)
 	if count == 0 {
-		fmt.Println("Creating", config.DbName, "database")
+		slog.Logger.Info("Creating ", config.DbName, " database")
 		_, err = postgresConn.Exec(fmt.Sprintf("CREATE DATABASE %s OWNER postgres", config.DbName))
 		if err != nil {
 			panic(err)
@@ -115,10 +117,12 @@ func getConnStr(host, user, password, dbname string) string {
 
 func createTablesIfNotExists() {
 	if _, err := conn.Exec(createFilesTableIFNotExistsSql); err != nil {
-		panic(err.Error())
+		slog.Logger.OpsError(err)
+		panic(err)
 	}
 	if _, err := conn.Exec(createUpgradesTableIfNotExists); err != nil {
-		panic(err.Error())
+		slog.Logger.OpsError(err)
+		panic(err)
 	}
 }
 
@@ -130,17 +134,17 @@ func InsertNewFileInfo(code, name string, fileSize int) (err error) {
 }
 
 // SelectFileInfo returns a file info based off of code
-func SelectFileInfo(code string) (fileInfo *FileInfo, err error) {
+func SelectFileInfo(code string) (fileInfo *FileInfo, err error, errNoRows bool) {
 	fileInfo = &FileInfo{}
 	row := conn.QueryRow(selectFileInfoSql, code)
 	err = row.Scan(&fileInfo.Code, &fileInfo.Name, &fileInfo.FileSize, &fileInfo.UploadedOn)
-	return
+	return fileInfo, sherlog.AsOpsError(err), err == sql.ErrNoRows
 }
 
 // FileInfoExists checks if a file exists. Returns an error if there is a problem querying the database.
 func FileInfoExists(code string) (bool, error) {
-	_, err := SelectFileInfo(code)
-	if err == sql.ErrNoRows {
+	_, err, doesNotExist := SelectFileInfo(code)
+	if doesNotExist {
 		return false, nil
 	}
 	if err != nil {
@@ -154,13 +158,13 @@ func DeleteFilesOlderThan(days int) (codes []string, err error) {
 	now := time.Now().UTC()
 	rows, err := conn.Query(deleteOlderThan, &now, days)
 	if err != nil {
-		return
+		return codes, sherlog.AsOpsError(err)
 	}
 	for rows.Next() {
 		var code string
 		err = rows.Scan(&code)
 		if err != nil {
-			return
+			return codes, sherlog.AsError(err)
 		}
 		codes = append(codes, code)
 	}
@@ -170,5 +174,5 @@ func DeleteFilesOlderThan(days int) (codes []string, err error) {
 // DeleteDbEntryFromCode deletes the entry in the database with the matching code.
 func DeleteDbEntryFromCode(code string) error {
 	_, err := conn.Exec(deleteFromCode, code)
-	return err
+	return sherlog.AsOpsError(err)
 }

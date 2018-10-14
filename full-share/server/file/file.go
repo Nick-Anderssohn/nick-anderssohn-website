@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+
+	"github.com/Nick-Anderssohn/sherlog"
 )
 
 const (
@@ -20,13 +22,13 @@ func SaveFile(code, fileName string, data []byte) (bool, string, error) {
 		os.Mkdir(fileFolderPath+code, 0755)
 		err = ioutil.WriteFile(filePath, data, 0644)
 		if err != nil {
-			return false, "", err
+			return false, "", sherlog.AsError(err)
 		}
 	} else if err == nil {
 		return true, filePath, nil
 	}
 
-	return false, "", err
+	return false, "", sherlog.AsError(err)
 }
 
 // DeleteFile deletes the file that corresponds to code
@@ -34,7 +36,7 @@ func DeleteFile(code string) error {
 	filePath := fmt.Sprintf("%s%s", fileFolderPath, code)
 	err := os.RemoveAll(filePath)
 	if err != nil {
-		return fmt.Errorf("could not remove file for code %s: %s", code, err.Error())
+		return sherlog.AsError(fmt.Sprintf("could not remove file for code %s: %s", code, err.Error()))
 	}
 	return nil
 }

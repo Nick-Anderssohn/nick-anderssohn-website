@@ -23,5 +23,8 @@ func readConfig() {
 	if err != nil {
 		panic(err)
 	}
-	json.Unmarshal(configBytes, &ApplicationConfig)
+	err = json.Unmarshal(configBytes, &ApplicationConfig)
+	if err != nil {
+		panic(err)
+	}
 }

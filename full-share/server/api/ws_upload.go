@@ -2,22 +2,18 @@ package api
 
 import (
 	"encoding/json"
-	"nick-anderssohn-website/full-share/server/db"
-
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
-	"time"
-
+	"nick-anderssohn-website/full-share/server/db"
+	"nick-anderssohn-website/full-share/server/httputil"
 	"nick-anderssohn-website/full-share/server/serverutil"
-
+	"nick-anderssohn-website/full-share/server/slog"
 	"os"
-
+	"time"
 	"unicode"
 
-	"nick-anderssohn-website/full-share/server/httputil"
-
+	"github.com/Nick-Anderssohn/sherlog"
 	"github.com/gorilla/websocket"
 	"github.com/satori/go.uuid"
 )
@@ -97,7 +93,7 @@ func init() {
 
 func recoverAndLog() {
 	if e := recover(); e != nil {
-		log.Println(e)
+		slog.Logger.Critical(e)
 	}
 }
 
@@ -107,7 +103,7 @@ func saveViaWebsocket(w http.ResponseWriter, r *http.Request) {
 	// Upgrade to a websocket connection
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println("failed to upgrade to ws conn ", err)
+		slog.Logger.Warn("failed to upgrade to ws conn ", err)
 		return
 	}
 	defer conn.Close() // Close ws connection on func return
@@ -118,6 +114,7 @@ func saveViaWebsocket(w http.ResponseWriter, r *http.Request) {
 		if code != "" {
 			deleteCodeFromDb(code)
 		}
+		slog.Logger.Error(errWithCode.Err)
 		writeMsgToWs(conn, errWithCode.Status.Code, errWithCode.Status.Msg, "Could not setup upload.")
 		return
 	}
@@ -134,6 +131,7 @@ func saveViaWebsocket(w http.ResponseWriter, r *http.Request) {
 	// Create the processor that will be used to write the file to disk
 	processor, err := newUploadProcessor(conn, fileInfo.FileSize, bufSize, folder, fileInfo.FileName)
 	if err != nil {
+		slog.Logger.Error(sherlog.PrependMsg(err, "upload failed"))
 		writeMsgToWs(conn, httputil.InternalServerError.Code, httputil.InternalServerError.Msg, "Could not write file.")
 		return
 	}
@@ -152,7 +150,7 @@ func saveViaWebsocket(w http.ResponseWriter, r *http.Request) {
 
 	for bytesReceived < fileInfo.FileSize {
 		if processor.Processor.Stopped {
-			log.Println("failed to write to file ", err)
+			slog.Logger.Warn("processor stopped before upload completed")
 			writeMsgToWs(conn, httputil.InternalServerError.Code, httputil.InternalServerError.Msg, "Could not write file.")
 			return
 		}
@@ -161,7 +159,7 @@ func saveViaWebsocket(w http.ResponseWriter, r *http.Request) {
 		conn.SetReadDeadline(time.Now().Add(wsReadMaxDuration))
 		_, msgBytes, err := conn.ReadMessage()
 		if err != nil {
-			log.Println("failed to read message ", err)
+			slog.Logger.Warn("failed to read message ", err)
 			writeMsgToWs(conn, httputil.InternalServerError.Code, httputil.InternalServerError.Msg, "Could not read message.")
 			return
 		}
@@ -180,6 +178,7 @@ func saveViaWebsocket(w http.ResponseWriter, r *http.Request) {
 		downloadLink := makeUrl(downloadFile, "/", code, "/", fileInfo.FileName)
 		writeMsgToWs(conn, httputil.Ok.Code, httputil.Ok.Msg, downloadLink)
 	} else {
+		slog.Logger.Error("upload failed due to an unknown reason")
 		writeMsgToWs(conn, httputil.InternalServerError.Code, httputil.InternalServerError.Msg, "Something went wrong.")
 	}
 }
@@ -192,20 +191,20 @@ func setupUpload(conn *websocket.Conn) (*UploadSetupMsg, string, *httputil.ErrWi
 	conn.SetReadDeadline(time.Now().Add(wsReadMaxDuration))
 	_, msgBytes, err := conn.ReadMessage()
 	if err != nil {
-		return nil, "", &httputil.ErrWithStatus{Status: httputil.InternalServerError, Err: err}
+		return nil, "", &httputil.ErrWithStatus{Status: httputil.InternalServerError, Err: sherlog.AsWarning(err)}
 	}
 
 	// Unmarshal
 	var setupMsg UploadSetupMsg
 	err = json.Unmarshal(msgBytes, &setupMsg)
 	if err != nil {
-		return nil, "", &httputil.ErrWithStatus{Status: httputil.BadRequest, Err: err}
+		return nil, "", &httputil.ErrWithStatus{Status: httputil.BadRequest, Err: sherlog.AsWarning(err)}
 	}
 
 	if setupMsg.FileSize > maxFileSize {
 		return nil, "", &httputil.ErrWithStatus{
 			Status: httputil.BadRequest,
-			Err:    fmt.Errorf("file too large. max allowed file size: %d bytes. provided file size: %d bytes", maxFileSize, setupMsg.FileSize),
+			Err:    sherlog.AsWarning(fmt.Errorf("file too large. max allowed file size: %d bytes. provided file size: %d bytes", maxFileSize, setupMsg.FileSize)),
 		}
 	}
 
@@ -252,7 +251,7 @@ func getUuid() (code string, err error) {
 
 		// Stop after 10 retries
 		if retryCount >= 10 {
-			return "", fmt.Errorf("could not generate new code")
+			return "", sherlog.AsError("could not generate new code")
 		}
 	}
 	return
@@ -261,7 +260,7 @@ func getUuid() (code string, err error) {
 func deleteCodeFromDb(code string) {
 	err := db.DeleteDbEntryFromCode(code)
 	if err != nil {
-		log.Println("failed to delete db entry for code ", code)
+		slog.Logger.Warn("failed to delete db entry for code ", code)
 	}
 }
 

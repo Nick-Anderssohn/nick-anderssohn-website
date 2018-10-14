@@ -2,10 +2,10 @@ package api
 
 import (
 	"nick-anderssohn-website/full-share/server/concurrency"
-
-	"log"
 	"nick-anderssohn-website/full-share/server/file"
+	"nick-anderssohn-website/full-share/server/slog"
 
+	"github.com/Nick-Anderssohn/sherlog"
 	"github.com/gorilla/websocket"
 )
 
@@ -20,8 +20,7 @@ type uploadProcessor struct {
 func newUploadProcessor(conn *websocket.Conn, fileSize, bufSize int, folder, fileName string) (*uploadProcessor, error) {
 	fileWriter, err := file.NewFileWriter(fileSize, bufSize, folder, fileName)
 	if err != nil {
-		log.Println("could not create file writer ", err)
-		return nil, err
+		return nil, sherlog.PrependMsg(err, "could not create upload processor")
 	}
 
 	up := &uploadProcessor{
@@ -38,7 +37,7 @@ func (up *uploadProcessor) process(val interface{}) {
 	bytesWritten, err := up.fileWriter.Write(fileSlice)
 
 	if err != nil {
-		log.Println("failed to write to file ", err)
+		slog.Logger.Error(err)
 		up.Processor.Stop()
 		writeMsgToWs(up.conn, 501, "", "Could not write file.")
 		return

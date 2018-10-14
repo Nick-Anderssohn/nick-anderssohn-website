@@ -1,11 +1,13 @@
 package reaper
 
 import (
-	"log"
 	"nick-anderssohn-website/full-share/server/db"
 	"nick-anderssohn-website/full-share/server/file"
+	"nick-anderssohn-website/full-share/server/slog"
 	"os"
 	"time"
+
+	"github.com/Nick-Anderssohn/sherlog"
 )
 
 // ReapEvery24Hours will delete files older than 2 days every 24 hours
@@ -23,19 +25,19 @@ func deleteFile(code string) (err error) {
 	}
 
 	err = file.DeleteFile(code)
-	return
+	return sherlog.AsError("could not delete file: ", err)
 }
 
 func reap() {
 	codesToDelete, err := db.DeleteFilesOlderThan(2)
 	if err != nil {
-		log.Println("could not delete file entries from db ", err)
+		slog.Logger.Log(err)
 	}
 
 	for _, code := range codesToDelete {
 		err = deleteFile(code)
 		if err != nil {
-			log.Println("could not delete file ", err)
+			slog.Logger.Log(err)
 		}
 	}
 }

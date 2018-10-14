@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+
+	"github.com/Nick-Anderssohn/sherlog"
 )
 
 // FileWriter is meant to write files in parts instead of all at once.
@@ -26,7 +28,7 @@ func NewFileWriter(targetFileSize, writerBufSize int, folder, fileName string) (
 	filePath := fmt.Sprintf("%s%s", folder, fileName)
 	_, err := os.Stat(filePath)
 	if !os.IsNotExist(err) {
-		return nil, fmt.Errorf("%s already exists", filePath)
+		return nil, sherlog.AsError(fmt.Sprintf("%s already exists", filePath))
 	}
 	os.MkdirAll(folder, 0755)
 	f, err := os.Create(filePath)
@@ -48,7 +50,7 @@ Writes to the buffered writer.
 func (fw *FileWriter) Write(bytes []byte) (int, error) {
 	bytesWritten, err := fw.writer.Write(bytes)
 	fw.currentSize += bytesWritten
-	return bytesWritten, err
+	return bytesWritten, sherlog.AsError(err)
 }
 
 /*

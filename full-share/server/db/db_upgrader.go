@@ -2,7 +2,7 @@ package db
 
 import (
 	"database/sql"
-	"log"
+	"nick-anderssohn-website/full-share/server/slog"
 )
 
 const (
@@ -25,20 +25,21 @@ func runUpgrades() {
 		// Check upgrade has already been ran
 		hasRan, err := upgradeHasBeenRan(upgradeNumber)
 		if err != nil {
+			slog.Logger.OpsError(err)
 			panic(err)
 		}
 		if !hasRan {
-			log.Println("Upgrade ran:", sqlStatement)
 			// Run upgrade
 			_, err = conn.Exec(sqlStatement)
 			if err != nil {
+				slog.Logger.OpsError(err)
 				panic(err)
 			}
-
+			slog.Logger.Info("Upgrade ran: ", sqlStatement)
 			// Record in upgrades table
 			_, err = conn.Exec(insertIntoUpgrades, upgradeNumber)
 			if err != nil {
-				log.Println("could not record upgrade number ", upgradeNumber)
+				slog.Logger.OpsError("could not record upgrade number ", upgradeNumber)
 				panic(err)
 			}
 		}
