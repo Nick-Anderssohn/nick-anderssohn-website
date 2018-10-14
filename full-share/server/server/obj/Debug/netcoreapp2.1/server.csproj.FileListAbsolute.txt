@@ -1,0 +1,14 @@
+C:\Users\Nick\go\src\nick-anderssohn-website\full-share\server\server\bin\Debug\netcoreapp2.1\server.deps.json
+C:\Users\Nick\go\src\nick-anderssohn-website\full-share\server\server\bin\Debug\netcoreapp2.1\server.runtimeconfig.json
+C:\Users\Nick\go\src\nick-anderssohn-website\full-share\server\server\bin\Debug\netcoreapp2.1\server.runtimeconfig.dev.json
+C:\Users\Nick\go\src\nick-anderssohn-website\full-share\server\server\bin\Debug\netcoreapp2.1\server.dll
+C:\Users\Nick\go\src\nick-anderssohn-website\full-share\server\server\bin\Debug\netcoreapp2.1\server.pdb
+C:\Users\Nick\go\src\nick-anderssohn-website\full-share\server\server\obj\Debug\netcoreapp2.1\server.csprojAssemblyReference.cache
+C:\Users\Nick\go\src\nick-anderssohn-website\full-share\server\server\obj\Debug\netcoreapp2.1\server.csproj.CoreCompileInputs.cache
+C:\Users\Nick\go\src\nick-anderssohn-website\full-share\server\server\obj\Debug\netcoreapp2.1\server.RazorAssemblyInfo.cache
+C:\Users\Nick\go\src\nick-anderssohn-website\full-share\server\server\obj\Debug\netcoreapp2.1\server.RazorAssemblyInfo.cs
+C:\Users\Nick\go\src\nick-anderssohn-website\full-share\server\server\obj\Debug\netcoreapp2.1\server.AssemblyInfoInputs.cache
+C:\Users\Nick\go\src\nick-anderssohn-website\full-share\server\server\obj\Debug\netcoreapp2.1\server.AssemblyInfo.cs
+C:\Users\Nick\go\src\nick-anderssohn-website\full-share\server\server\obj\Debug\netcoreapp2.1\server.RazorTargetAssemblyInfo.cache
+C:\Users\Nick\go\src\nick-anderssohn-website\full-share\server\server\obj\Debug\netcoreapp2.1\server.dll
+C:\Users\Nick\go\src\nick-anderssohn-website\full-share\server\server\obj\Debug\netcoreapp2.1\server.pdb
