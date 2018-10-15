@@ -4,6 +4,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using server.Config;
 
 namespace server.Controllers {
     /*
@@ -39,26 +41,80 @@ namespace server.Controllers {
     [Route("/")]
     [ApiController]
     public class UploadController : ControllerBase {
+        private readonly UploadConfig _config = new UploadConfig();
+
         [HttpGet]
-        public async Task<ActionResult> HandleWsUpload() {
+        public async Task HandleWsUpload() {
             // Setup ws connection
             if (!HttpContext.WebSockets.IsWebSocketRequest) {
-                return BadRequest();
+                BadRequest();
+                return;
             }
 
-            var respBytes = Encoding.UTF8.GetBytes("test");
             WebSocket ws = await HttpContext.WebSockets.AcceptWebSocketAsync();
-
             var buf = new byte[1024 * 4];
-            
-            // Read msg from client
-            await ws.ReceiveAsync(new ArraySegment<byte>(buf), CancellationToken.None);
 
-            // Reply with test
-            // msg content, msg type, end of msg, cancellation token
-            await ws.SendAsync(new ReadOnlyMemory<byte>(respBytes), WebSocketMessageType.Text, true, CancellationToken.None);
+            await Setup(ws, buf);
             await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Success", CancellationToken.None);
-            return Ok();
+        }
+
+        private async Task Setup(WebSocket ws, byte[] buf) {
+            // Read setup msg
+            WebSocketReceiveResult result = await ws.ReceiveAsync(new ArraySegment<byte>(buf), CancellationToken.None);
+            SetupMsg setupMsg = JsonConvert.DeserializeObject<SetupMsg>(Encoding.UTF8.GetString(buf, 0, result.Count));
+
+            if (setupMsg.FileSize > _config.MaxFileSize) {
+                await SendResp(ws, Resp.BadRequest("File size too large."));
+                throw new Exception("File size too large");
+            }
+
+            setupMsg.FileName = UploadUtil.SanitizeFileName(setupMsg.FileName);
+        }
+
+        private static async Task SendResp(WebSocket ws, Resp resp) {
+            byte[] respBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(resp));
+            await ws.SendAsync(new ArraySegment<byte>(respBytes), WebSocketMessageType.Text, true,
+                CancellationToken.None);
+        }
+
+        private class SetupMsg {
+            [JsonProperty(Required = Required.Always)]
+            public long FileSize { get; set; }
+
+            [JsonProperty(Required = Required.Always)]
+            public string FileName { get; set; }
+        }
+
+        private class Resp {
+            public int StatusCode { get; set; }
+            public string StatusMsg { get; set; } = "";
+            public string Message { get; set; } = "";
+
+            public static Resp BadRequest() {
+                return new Resp {
+                    StatusCode = 400,
+                    StatusMsg = "Bad Request"
+                };
+            }
+
+            public static Resp BadRequest(string message) {
+                Resp resp = BadRequest();
+                resp.Message = message;
+                return resp;
+            }
+
+            public static Resp Ok() {
+                return new Resp {
+                    StatusCode = 200,
+                    StatusMsg = "Ok"
+                };
+            }
+
+            public static Resp Ok(string message) {
+                Resp resp = Ok();
+                resp.Message = message;
+                return resp;
+            }
         }
     }
 }
