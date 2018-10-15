@@ -17,6 +17,21 @@ vendor/
 *.pem
 *.log
 
+*.swp
+*.*~
+project.lock.json
+*.pyc
+nupkg/
+
+# Visual Studio Code
+.vscode
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
 # .Net Core Build results
 [Dd]ebug/
 [Dd]ebugPublic/
