@@ -6,8 +6,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using server.Config;
+using server.Upload.Util;
 
-namespace server.Controllers {
+namespace server.Upload.Controllers {
     /*
     A successful save file hand shake will look like the following:
     Client sends:
@@ -69,6 +70,13 @@ namespace server.Controllers {
             }
 
             setupMsg.FileName = UploadUtil.SanitizeFileName(setupMsg.FileName);
+            string code = GetGuid();
+            
+        }
+
+        private string GetGuid() {
+            Guid code = Guid.NewGuid();
+            return code.ToString();
         }
 
         private static async Task SendResp(WebSocket ws, Resp resp) {

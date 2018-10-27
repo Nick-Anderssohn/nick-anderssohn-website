@@ -1,7 +1,7 @@
 using System.Linq;
 
-namespace server.Controllers {
-    public class UploadUtil {
+namespace server.Upload.Util {
+    public static class UploadUtil {
         internal static string SanitizeFileName(string fileName) {
             char[] chars = fileName.ToCharArray()
                 .Select(c => char.IsLetterOrDigit(c) || c == '.' ? c : '_')
