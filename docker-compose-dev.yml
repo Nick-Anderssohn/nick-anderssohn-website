@@ -6,6 +6,8 @@ services:
       POSTGRES_PASSWORD: 123
     volumes:
       - full-share-file-db:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
     restart: always
 
   file-manager:

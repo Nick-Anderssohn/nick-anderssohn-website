@@ -30,6 +30,7 @@ namespace server.Upload.Db {
             );
 
             using (NpgsqlConnection conn = new NpgsqlConnection(noDbConnStr)) {
+                conn.Open();
                 if (DatabaseExists(conn, DbConfig.Config.DbName)) {
                     return;
                 }
