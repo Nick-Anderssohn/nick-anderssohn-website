@@ -15,6 +15,8 @@ namespace server {
                 .CreateLogger();
             
             DbStaticInitializer.SetupDb();
+            var dbHelper = new FullShareDbHelper();
+            dbHelper.Migrate();
         }
         
         // This method gets called by the runtime. Use this method to add services to the container.

@@ -10,19 +10,8 @@ namespace server.Upload.Db {
                 CreateDbIfNotExist();
         }
         
-        private static string ConnStr { get; } = BuildConnStr(
-            DbConfig.Config.Host,
-            DbConfig.Config.Username,
-            DbConfig.Config.Password,
-            DbConfig.Config.DbName
-        );
-
-        private static string BuildConnStr(string host, string username, string password, string dbName) {
-            return $"Host={host}; Username={username}; Password={password}; Database={dbName};";
-        }
-
         private static void CreateDbIfNotExist() {
-            string noDbConnStr = BuildConnStr(
+            string noDbConnStr = DbUtil.BuildConnStr(
                 DbConfig.Config.Host,
                 "postgres",
                 DbConfig.Config.PostgresPassword,
@@ -34,10 +23,9 @@ namespace server.Upload.Db {
                 if (DatabaseExists(conn, DbConfig.Config.DbName)) {
                     return;
                 }
-
-                using (var cmd = new NpgsqlCommand(SqlCreateDbIfNotExist, conn)) {
-                    cmd.Parameters.AddWithValue("dbName", DbConfig.Config.DbName);
-                    cmd.Parameters.AddWithValue("owner", DbConfig.Config.Username);
+                
+                // Don't need to sanitize values from our config...
+                using (var cmd = new NpgsqlCommand($"CREATE DATABASE {DbConfig.Config.DbName} OWNER {DbConfig.Config.Username}", conn)) {
                     cmd.ExecuteNonQuery();
                 }
             }
@@ -45,7 +33,7 @@ namespace server.Upload.Db {
 
         private static bool DatabaseExists(NpgsqlConnection conn, string dbName) {
             using (var cmd = new NpgsqlCommand(SqlCountPgDatabaseWhereDatname, conn)) {
-                cmd.Parameters.AddWithValue("dbName", dbName);
+                cmd.Parameters.AddWithValue("@dbName", dbName);
                 using (NpgsqlDataReader reader = cmd.ExecuteReader()) {
                     reader.Read();
                     int numDatabases = reader.GetInt32(0);
@@ -57,6 +45,5 @@ namespace server.Upload.Db {
 
         // ******************** SQL Strings and Variables ********************
         private static readonly string SqlCountPgDatabaseWhereDatname = @"SELECT COUNT(*) FROM pg_database WHERE datname = @dbName";
-        private static readonly string SqlCreateDbIfNotExist = @"CREATE DATABASE @dbName OWNER @owner";
     }
 }

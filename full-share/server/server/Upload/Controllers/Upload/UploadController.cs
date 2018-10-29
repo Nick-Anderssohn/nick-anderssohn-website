@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 using server.Config;
 using server.Upload.Util;
 
-namespace server.Upload.Controllers {
+namespace server.Upload.Controllers.Upload {
     /*
     A successful save file hand shake will look like the following:
     Client sends:
@@ -84,45 +84,11 @@ namespace server.Upload.Controllers {
             await ws.SendAsync(new ArraySegment<byte>(respBytes), WebSocketMessageType.Text, true,
                 CancellationToken.None);
         }
-
+        
+        [JsonObject(ItemRequired = Required.Always)]
         private class SetupMsg {
-            [JsonProperty(Required = Required.Always)]
             public long FileSize { get; set; }
-
-            [JsonProperty(Required = Required.Always)]
             public string FileName { get; set; }
-        }
-
-        private class Resp {
-            public int StatusCode { get; set; }
-            public string StatusMsg { get; set; } = "";
-            public string Message { get; set; } = "";
-
-            public static Resp BadRequest() {
-                return new Resp {
-                    StatusCode = 400,
-                    StatusMsg = "Bad Request"
-                };
-            }
-
-            public static Resp BadRequest(string message) {
-                Resp resp = BadRequest();
-                resp.Message = message;
-                return resp;
-            }
-
-            public static Resp Ok() {
-                return new Resp {
-                    StatusCode = 200,
-                    StatusMsg = "Ok"
-                };
-            }
-
-            public static Resp Ok(string message) {
-                Resp resp = Ok();
-                resp.Message = message;
-                return resp;
-            }
         }
     }
 }
