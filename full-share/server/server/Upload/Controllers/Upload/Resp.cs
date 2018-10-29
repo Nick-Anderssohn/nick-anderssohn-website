@@ -29,5 +29,12 @@ namespace server.Upload.Controllers.Upload {
             resp.Message = message;
             return resp;
         }
+
+        public static Resp InternalError() {
+            return new Resp {
+                StatusCode = 500,
+                StatusMsg = "Internal Server Error"
+            };
+        }
     }
 }

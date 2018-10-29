@@ -39,7 +39,7 @@ error message.
 class WsUploader extends SubCleaner {
   static const String uploadEndpoint = '/upload';
   static const int maxFileSize = 1024 * 1024 * 1024 * 5; // 5 GiB;
-  static const int _sliceSize = 1024 * 1024 * 5; // 5 MiB
+  static const int _sliceSize = 1024 * 1024; // 1 MiB
 
   final File _file;
   WebSocket _ws;

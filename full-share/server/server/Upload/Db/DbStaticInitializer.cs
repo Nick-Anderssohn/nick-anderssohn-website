@@ -1,6 +1,7 @@
 using System;
 using Npgsql;
 using server.Upload.Db.Config;
+using Serilog;
 
 // Uses Npgsql to setup the database/tables. It's nice to use raw sql to actually
 // setup the database/schema. This way, we know exactly what is going on with it.
@@ -37,7 +38,7 @@ namespace server.Upload.Db {
                 using (NpgsqlDataReader reader = cmd.ExecuteReader()) {
                     reader.Read();
                     int numDatabases = reader.GetInt32(0);
-                    Console.WriteLine("Number of databases found: " + numDatabases);
+                    Log.Information("Number of databases found: {NumDatabases}", numDatabases);
                     return numDatabases > 0;
                 }
             }
