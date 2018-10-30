@@ -15,6 +15,7 @@ namespace server.Upload.Controllers.Upload {
         private readonly string _code;
         private readonly string _fileName;
         private readonly long _targetFileSize;
+        private readonly ManualResetEvent _sentFinalResponseNotification = new ManualResetEvent(false);
 
         public FileProcessor(WebSocket ws, long targetFileSize, string code, string fileName) {
             _ws = ws;
@@ -30,11 +31,12 @@ namespace server.Upload.Controllers.Upload {
         public async Task Run() {
             try {
                 _writer.RunAsync();
-
                 for (int bytesReceived = 0; bytesReceived < _targetFileSize;) {
-                    var buf = new byte[1024 * 1024]; // 1 MiB
+                    var buf = new byte[1024 * 1024 * 5]; // 5 MiB
                     WebSocketReceiveResult result =
                         await _ws.ReceiveAsync(new ArraySegment<byte>(buf), CancellationToken.None);
+                    Log.Information("Bytes received: " + result.Count);
+                    await UploadUtil.SendResp(_ws, Resp.Ok());
                     bytesReceived += result.Count;
                     _writer.Process(new ArraySegment<byte>(buf, 0, result.Count));
                 }
@@ -42,7 +44,10 @@ namespace server.Upload.Controllers.Upload {
             catch (Exception e) {
                 _writer.Cancel();
                 Log.Error("could not process file {exception}", e);
+                Finish(false);
             }
+
+            _sentFinalResponseNotification.WaitOne();
         }
 
         private void Finish(bool success) {
@@ -52,6 +57,7 @@ namespace server.Upload.Controllers.Upload {
             else {
                 HandleUnknownFailure();
             }
+            _sentFinalResponseNotification.Set();
         }
 
         private async void HandleSuccess() {

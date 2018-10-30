@@ -1,5 +1,4 @@
-﻿using System.Net;
-using Microsoft.AspNetCore;
+﻿using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 
 namespace server {
@@ -10,7 +9,9 @@ namespace server {
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
-                .UseKestrel(options => options.Listen(IPAddress.Loopback, 8080))
+                .UseUrls("http://0.0.0.0:8080")
+                .UseKestrel()
+                .UseIISIntegration() // should I be using this?
                 .UseStartup<Startup>();
     }
 }

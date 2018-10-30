@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 using server.Upload.Db;
 using server.Upload.Db.EntityFramework.Model;
 using server.Upload.Util;
+using Serilog;
 
 namespace server.Upload.Controllers.Upload {
     /*
@@ -51,19 +52,23 @@ namespace server.Upload.Controllers.Upload {
 
         [HttpGet]
         public async Task HandleWsUpload() {
-            // Setup ws connection
-            if (!HttpContext.WebSockets.IsWebSocketRequest) {
-                BadRequest();
-                return;
+            try {
+                Log.Information("New upload.");
+                // Setup ws connection
+                if (!HttpContext.WebSockets.IsWebSocketRequest) {
+                    BadRequest();
+                    return;
+                }
+
+                WebSocket ws = await HttpContext.WebSockets.AcceptWebSocketAsync();
+                SetupMsg setupMsg = await Setup(ws);
+                FileProcessor processor = new FileProcessor(ws, setupMsg.FileSize, setupMsg.Code, setupMsg.FileName);
+                await processor.Run();
+                Log.Information("Normal exit");
             }
-
-            WebSocket ws = await HttpContext.WebSockets.AcceptWebSocketAsync();
-            
-
-            SetupMsg setupMsg = await Setup(ws);
-            FileProcessor processor = new FileProcessor(ws, setupMsg.FileSize, setupMsg.Code, setupMsg.FileName);
-            // Todo: change processor.Run to return void instead of Task
-            processor.Run();
+            catch (Exception e) {
+                Log.Error("Upload failed {exception}", e);
+            }
         }
 
         private async Task<SetupMsg> Setup(WebSocket ws) {
@@ -71,16 +76,13 @@ namespace server.Upload.Controllers.Upload {
             // Read setup msg
             WebSocketReceiveResult result = await ws.ReceiveAsync(new ArraySegment<byte>(buf), CancellationToken.None);
             SetupMsg setupMsg = JsonConvert.DeserializeObject<SetupMsg>(Encoding.UTF8.GetString(buf, 0, result.Count));
-
             if (setupMsg.FileSize > UploadConfig.MaxFileSize) {
                 await ws.CloseAsync(WebSocketCloseStatus.PolicyViolation, "File size too large", CancellationToken.None);
                 throw new Exception("File size too large");
             }
-
             setupMsg.FileName = UploadUtil.SanitizeFileName(setupMsg.FileName);
             setupMsg.Code = GetGuid();
             _dbHelper.InsertFilesEntry(Files.CreateWithUtcNow(setupMsg.Code, setupMsg.FileName, setupMsg.FileSize));
-            
             await UploadUtil.SendResp(ws, Resp.Ok());
             return setupMsg;
         }

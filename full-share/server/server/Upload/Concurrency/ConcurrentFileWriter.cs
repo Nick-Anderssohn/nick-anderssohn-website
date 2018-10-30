@@ -32,14 +32,16 @@ namespace server.Upload.Concurrency {
         private void Run() {
             bool success = false;
             try {
-                using (StreamWriter writer = new StreamWriter(_filePath)) {
+                using (FileStream writer = new FileStream(_filePath, FileMode.Create, FileAccess.Write)) {
                     int bytesWritten = 0;
                     while (bytesWritten < _targetFileSize) {
                         CancelableValue<ArraySegment<byte>> nextProcessMsg = _fileSlices.Take();
                         if (nextProcessMsg.Cancel) {
+                            Log.Information("Write process was canceled");
+                            // Todo: remove partial file
                             return;
                         }
-
+                        
                         ArraySegment<byte> fileSlice = nextProcessMsg.Value;
                         writer.Write(fileSlice);
                         bytesWritten += fileSlice.Count;
