@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using server.Upload.Db.EntityFramework;
@@ -40,6 +43,22 @@ namespace server.Upload.Db {
             using (var ctx = new FullShareContext()) {
                 ctx.Entry(fileInfo).State = EntityState.Deleted;
                 ctx.SaveChanges();
+            }
+        }
+
+        // Optionally, this can be optimized with DELETE FROM files WHERE date_part('day', age($1, uploadedOn)) >= $2 RETURNING code;
+        // Returns the codes of the deleted records.
+        public List<string> DeleteFilesOlderThan(TimeSpan duration) {
+            using (var ctx = new FullShareContext()) {
+                var filesToDelete =
+                    from f in ctx.Files
+                    where f.Uploadedon != null && DateTime.UtcNow.Subtract(f.Uploadedon.Value) >= duration
+                    select f;
+
+                List<string> codes = filesToDelete.Select(f => f.Code).ToList();
+                ctx.Files.RemoveRange(filesToDelete);
+                ctx.SaveChanges();
+                return codes;
             }
         }
     }

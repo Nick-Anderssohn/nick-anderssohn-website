@@ -8,9 +8,9 @@ using Serilog;
 namespace server.Upload.Db {
     static class DbStaticInitializer {
         public static void SetupDb() {
-                CreateDbIfNotExist();
+            CreateDbIfNotExist();
         }
-        
+
         private static void CreateDbIfNotExist() {
             string noDbConnStr = DbUtil.BuildConnStr(
                 DbConfig.Config.Host,
@@ -24,9 +24,11 @@ namespace server.Upload.Db {
                 if (DatabaseExists(conn, DbConfig.Config.DbName)) {
                     return;
                 }
-                
+
                 // Don't need to sanitize values from our config...
-                using (var cmd = new NpgsqlCommand($"CREATE DATABASE {DbConfig.Config.DbName} OWNER {DbConfig.Config.Username}", conn)) {
+                using (var cmd =
+                    new NpgsqlCommand($"CREATE DATABASE {DbConfig.Config.DbName} OWNER {DbConfig.Config.Username}",
+                        conn)) {
                     cmd.ExecuteNonQuery();
                 }
             }
@@ -45,6 +47,7 @@ namespace server.Upload.Db {
         }
 
         // ******************** SQL Strings and Variables ********************
-        private static readonly string SqlCountPgDatabaseWhereDatname = @"SELECT COUNT(*) FROM pg_database WHERE datname = @dbName";
+        private static readonly string SqlCountPgDatabaseWhereDatname =
+            @"SELECT COUNT(*) FROM pg_database WHERE datname = @dbName";
     }
 }

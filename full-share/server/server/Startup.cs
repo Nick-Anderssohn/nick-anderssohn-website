@@ -9,10 +9,13 @@ using Microsoft.Extensions.DependencyInjection;
 using server.Upload.Controllers.Upload;
 using server.Upload.Db;
 using server.Upload.Db.Config;
+using server.Upload.Reaper;
 using Serilog;
 
 namespace server {
     public class Startup {
+        // Every 24 hours, remove files 2 days or older.
+        private static readonly Reaper Grim = new Reaper(24, TimeSpan.FromDays(2));
         static Startup() {
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
@@ -22,6 +25,8 @@ namespace server {
             DbStaticInitializer.SetupDb();
             var dbHelper = new FullShareDbHelper();
             dbHelper.Migrate();
+            
+            Grim.ReapAndStart();
         }
 
         // This method gets called by the runtime. Use this method to add services to the container.

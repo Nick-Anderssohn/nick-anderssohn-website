@@ -15,7 +15,7 @@ namespace server.Upload.Util {
                 .ToArray();
             return new string(chars);
         }
-        
+
         public static async Task SendResp(WebSocket ws, Resp resp) {
             byte[] respBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(resp));
             await ws.SendAsync(new ArraySegment<byte>(respBytes), WebSocketMessageType.Text, true,

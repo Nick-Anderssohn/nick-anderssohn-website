@@ -9,7 +9,6 @@ using Serilog;
 
 namespace server.Upload.Controllers.Upload {
     sealed class FileProcessor {
-        private static readonly string DownloadDir = "download";
         private readonly ConcurrentFileWriter _writer;
         private readonly WebSocket _ws;
         private readonly string _code;
@@ -22,7 +21,7 @@ namespace server.Upload.Controllers.Upload {
             _code = code;
             _fileName = fileName;
             _targetFileSize = targetFileSize;
-            string dir = Path.Combine(DownloadDir, code);
+            string dir = Path.Combine(UploadConfig.DownloadDir, code);
             Directory.CreateDirectory(dir);
             _writer = new ConcurrentFileWriter(Path.Combine(dir, fileName), targetFileSize);
             _writer.RegisterFinally(Finish);
@@ -39,8 +38,7 @@ namespace server.Upload.Controllers.Upload {
                     bytesReceived += result.Count;
                     _writer.Process(new ArraySegment<byte>(buf, 0, result.Count));
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 _writer.Cancel();
                 Log.Error("could not process file {exception}", e);
                 Finish(false);
@@ -53,15 +51,12 @@ namespace server.Upload.Controllers.Upload {
             try {
                 if (success) {
                     await HandleSuccess();
-                }
-                else {
+                } else {
                     await HandleUnknownFailure();
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 Log.Error("Could not finish: {error}", e);
-            }
-            finally {
+            } finally {
                 _sentFinalResponseNotification.Set();
             }
         }
@@ -79,7 +74,7 @@ namespace server.Upload.Controllers.Upload {
         private string MakeDownloadUrl() {
             string protocol = UploadConfig.WebsiteProtocol;
             string domain = UploadConfig.WebsiteDomain;
-            string downloadDir = Uri.EscapeDataString(DownloadDir);
+            string downloadDir = Uri.EscapeDataString(UploadConfig.DownloadDir);
             string code = Uri.EscapeDataString(_code);
             string fileName = Uri.EscapeDataString(_fileName);
             return $"{protocol}{domain}/{downloadDir}/{code}/{fileName}";

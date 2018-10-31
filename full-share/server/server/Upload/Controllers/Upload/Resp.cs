@@ -5,7 +5,7 @@ namespace server.Upload.Controllers.Upload {
         public int StatusCode { get; set; }
         public string StatusMsg { get; set; } = "";
         public string Message { get; set; } = "";
-        
+
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public long? ValueLong { get; set; } = null;
 

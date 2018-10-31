@@ -21,7 +21,8 @@ namespace server.Upload.Concurrency {
             _filePath = filePath;
         }
 
-        public void Process(ArraySegment<byte> fileSlice) => _fileSlices.Add(CancelableValue<ArraySegment<byte>>.CreateWithValue(fileSlice));
+        public void Process(ArraySegment<byte> fileSlice) =>
+            _fileSlices.Add(CancelableValue<ArraySegment<byte>>.CreateWithValue(fileSlice));
 
         public void Cancel() => _fileSlices.Add(CancelableValue<ArraySegment<byte>>.CreateCanceledValue());
 
@@ -41,7 +42,7 @@ namespace server.Upload.Concurrency {
                             // Todo: remove partial file
                             return;
                         }
-                        
+
                         ArraySegment<byte> fileSlice = nextProcessMsg.Value;
                         writer.Write(fileSlice);
                         bytesWritten += fileSlice.Count;
@@ -49,11 +50,9 @@ namespace server.Upload.Concurrency {
 
                     success = bytesWritten == _targetFileSize;
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 Log.Error("could not write file {exception}", e);
-            }
-            finally {
+            } finally {
                 _runFinally?.Invoke(success);
             }
         }

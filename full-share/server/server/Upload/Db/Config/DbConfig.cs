@@ -7,7 +7,7 @@ namespace server.Upload.Db.Config {
         // Singleton instance of the config
         public static DbConfig Config { get; } =
             JsonConvert.DeserializeObject<DbConfig>(File.ReadAllText("ConfigFiles/db_config.json"));
-        
+
         public DbConfig(string username, string password, string dbName, string postgresPassword, string host) {
             Username = username;
             Password = password;
@@ -15,7 +15,7 @@ namespace server.Upload.Db.Config {
             PostgresPassword = postgresPassword;
             Host = host;
         }
-        
+
         public string Username { get; }
         public string Password { get; }
         public string DbName { get; }

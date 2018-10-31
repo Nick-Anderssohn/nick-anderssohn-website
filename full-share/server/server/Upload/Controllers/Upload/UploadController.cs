@@ -64,8 +64,7 @@ namespace server.Upload.Controllers.Upload {
                 SetupMsg setupMsg = await Setup(ws);
                 FileProcessor processor = new FileProcessor(ws, setupMsg.FileSize, setupMsg.Code, setupMsg.FileName);
                 await processor.Run();
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 Log.Error("Upload failed {exception}", e);
             }
         }
@@ -76,9 +75,11 @@ namespace server.Upload.Controllers.Upload {
             WebSocketReceiveResult result = await ws.ReceiveAsync(new ArraySegment<byte>(buf), CancellationToken.None);
             SetupMsg setupMsg = JsonConvert.DeserializeObject<SetupMsg>(Encoding.UTF8.GetString(buf, 0, result.Count));
             if (setupMsg.FileSize > UploadConfig.MaxFileSize) {
-                await ws.CloseAsync(WebSocketCloseStatus.PolicyViolation, "File size too large", CancellationToken.None);
+                await ws.CloseAsync(WebSocketCloseStatus.PolicyViolation, "File size too large",
+                    CancellationToken.None);
                 throw new Exception("File size too large");
             }
+
             setupMsg.FileName = UploadUtil.SanitizeFileName(setupMsg.FileName);
             setupMsg.Code = GetGuid();
             _dbHelper.InsertFilesEntry(Files.CreateWithUtcNow(setupMsg.Code, setupMsg.FileName, setupMsg.FileSize));
@@ -90,15 +91,15 @@ namespace server.Upload.Controllers.Upload {
             Guid code = Guid.NewGuid();
             return code.ToString();
         }
-        
+
         private class SetupMsg {
             [JsonProperty(Required = Required.Always)]
             public long FileSize { get; set; }
+
             [JsonProperty(Required = Required.Always)]
             public string FileName { get; set; }
-            
-            [JsonIgnore]
-            public string Code { get; set; }
+
+            [JsonIgnore] public string Code { get; set; }
         }
     }
 }

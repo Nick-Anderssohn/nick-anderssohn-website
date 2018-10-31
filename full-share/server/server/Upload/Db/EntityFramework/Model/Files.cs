@@ -7,7 +7,7 @@ namespace server.Upload.Db.EntityFramework.Model {
         public string Name { get; set; }
         public long? Filesize { get; set; }
         public DateTime? Uploadedon { get; set; }
-        
+
         public static Files CreateWithUtcNow(string code, string name, long fileSize) {
             return new Files {
                 Code = code,
