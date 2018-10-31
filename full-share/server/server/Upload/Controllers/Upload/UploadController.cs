@@ -64,7 +64,6 @@ namespace server.Upload.Controllers.Upload {
                 SetupMsg setupMsg = await Setup(ws);
                 FileProcessor processor = new FileProcessor(ws, setupMsg.FileSize, setupMsg.Code, setupMsg.FileName);
                 await processor.Run();
-                Log.Information("Normal exit");
             }
             catch (Exception e) {
                 Log.Error("Upload failed {exception}", e);
@@ -72,7 +71,7 @@ namespace server.Upload.Controllers.Upload {
         }
 
         private async Task<SetupMsg> Setup(WebSocket ws) {
-            var buf = new byte[1024 * 4];
+            var buf = new byte[256];
             // Read setup msg
             WebSocketReceiveResult result = await ws.ReceiveAsync(new ArraySegment<byte>(buf), CancellationToken.None);
             SetupMsg setupMsg = JsonConvert.DeserializeObject<SetupMsg>(Encoding.UTF8.GetString(buf, 0, result.Count));

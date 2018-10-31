@@ -45,6 +45,7 @@ class WsUploader extends SubCleaner {
   WebSocket _ws;
   final Completer<String> _downloadLinkCompleter = Completer();
   int _bytesSent = 0;
+  int _bytesHandledByServer = 0;
   bool _connected = false;
   Function onErrorMsg; // void func(Map)
   Function onProgress; // void func(double)
@@ -119,7 +120,7 @@ class WsUploader extends SubCleaner {
 
     // Check if server response indicates success.
     if (_UploadRespParseUtil.getStatusCode(serverResponse) == _Status.ok) {
-      // Process final message if we are done uploading, otherwise start uploading.
+      _bytesHandledByServer += _UploadRespParseUtil.getValueLongWithDefault(serverResponse, 0);
       if (_doneUploading()) {
         String link = _UploadRespParseUtil.getMessage(serverResponse);
         if (link.isNotEmpty) {
@@ -127,9 +128,9 @@ class WsUploader extends SubCleaner {
           cleanup();
         }
       } else {
-        onProgress?.call(_bytesSent / _file.size * 100.0);
         _sendNextFileSlice();
       }
+      onProgress?.call(_bytesHandledByServer / _file.size * 100.0);
     } else {
       print(serverResponse);
       cleanup();
@@ -160,12 +161,15 @@ class _UploadRespParseUtil {
   static const String statusCodeKey = 'StatusCode';
   static const String statusMsgKey = 'StatusMsg';
   static const String messageKey = 'Message';
+  static const String valueLongKey = 'ValueLong';
 
   static int getStatusCode(Map serverResponse) => parseJsonFromKey(serverResponse, statusCodeKey);
 
   static String getStatusMsg(Map serverResponse) => parseJsonFromKey(serverResponse, statusMsgKey);
 
   static String getMessage(Map serverResponse) => parseJsonFromKey(serverResponse, messageKey);
+
+  static int getValueLongWithDefault(Map serverResponse, int defaultValue) => parseJsonFromKeyWithDefault(serverResponse, valueLongKey, defaultValue);
 }
 
 /// Contains status codes used in responses from the server

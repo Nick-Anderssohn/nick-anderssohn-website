@@ -39,3 +39,8 @@ dynamic parseJsonFromKey(Map jsonMap, dynamic key) {
 
   return value;
 }
+
+dynamic parseJsonFromKeyWithDefault(Map jsonMap, dynamic key, dynamic defaultValue) {
+  var value = jsonMap[key];
+  return value == null ? defaultValue : value;
+}

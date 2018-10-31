@@ -1,8 +1,13 @@
+using Newtonsoft.Json;
+
 namespace server.Upload.Controllers.Upload {
     public class Resp {
         public int StatusCode { get; set; }
         public string StatusMsg { get; set; } = "";
         public string Message { get; set; } = "";
+        
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public long? ValueLong { get; set; } = null;
 
         public static Resp BadRequest() {
             return new Resp {
@@ -35,6 +40,11 @@ namespace server.Upload.Controllers.Upload {
                 StatusCode = 500,
                 StatusMsg = "Internal Server Error"
             };
+        }
+
+        public Resp WithValueLong(long value) {
+            ValueLong = value;
+            return this;
         }
     }
 }
