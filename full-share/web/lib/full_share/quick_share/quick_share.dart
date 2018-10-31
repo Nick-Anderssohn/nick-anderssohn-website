@@ -90,17 +90,17 @@ class QuickShare {
   }
 
   void _handleProgress(double percentage) {
-    if (percentage > 0) {
-      // Note: do not use cascading operator (..) for these 2 assignments.
-      // It causes a graphical bug for some reason.
-      _progBar.classes = ['determinate'];
-      _progBar.style.width = '$percentage%';
-    } else {
-      // Note: do not use cascading operator (..) for these 2 assignments.
-      // It causes a graphical bug for some reason.
-      _progBar.classes = ['indeterminate'];
-      _progBar.style.width = '';
-    }
+//    if (percentage > 0) {
+//      // Note: do not use cascading operator (..) for these 2 assignments.
+//      // It causes a graphical bug for some reason.
+//      _progBar.classes = ['determinate'];
+//      _progBar.style.width = '$percentage%';
+//    } else {
+//      // Note: do not use cascading operator (..) for these 2 assignments.
+//      // It causes a graphical bug for some reason.
+//      _progBar.classes = ['indeterminate'];
+//      _progBar.style.width = '';
+//    }
 
     _uploadingMsg.text = 'Uploading... ${NumberFormat('###', "en_US").format(percentage)}%';
   }

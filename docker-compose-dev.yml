@@ -4,19 +4,28 @@ services:
     image: 'postgres:10.5'
     environment:
       POSTGRES_PASSWORD: 123
-    volumes:
-      - full-share-file-db:/var/lib/postgresql/data
+#    volumes:
+#      - full-share-file-db:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
     restart: always
+    networks:
+      nick-net:
+        aliases:
+        - file-db
 
   file-manager:
     depends_on:
       - file-db
-    build: 'full-share/server/.'
+    build: 'full-share/server/server/.'
     image: 'full-share-file-manager'
     volumes:
-     - download-volume:/download
-     - ./logs:/logs
+     - download-volume:/app/download
     restart: always
+    networks:
+      nick-net:
+        aliases:
+        - file-manager
     environment:
      - WEBSITE_DOMAIN=localhost:8080
      - WEBSITE_PROTOCOL=https://
@@ -34,7 +43,14 @@ services:
     ports:
      - '8080:443'
     restart: always
+    networks:
+      nick-net:
+        aliases:
+        - full-share-nginx
+
+networks:
+  nick-net:
 
 volumes:
   download-volume:
-  full-share-file-db:
+#  full-share-file-db:
