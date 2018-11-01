@@ -30,10 +30,6 @@ namespace server.Upload.Controllers.Upload {
         }
 
         public async Task Run() {
-            
-            long expectedMaxSliceSize = 1024 * 1024 * 5; // CRITICAL that this value matches what the client sends
-            long curSliceCount = 0;
-            
             try {
                 _writer.RunAsync();
                 for (int bytesReceived = 0; bytesReceived < _targetFileSize;) {
@@ -41,15 +37,13 @@ namespace server.Upload.Controllers.Upload {
 
                     WebSocketReceiveResult result =
                         await _ws.ReceiveAsync(new ArraySegment<byte>(buf), CancellationToken.None);
-                    
-                    bytesReceived += result.Count;
-                    curSliceCount += result.Count;
 
-                    if (curSliceCount >= expectedMaxSliceSize) {
-                        await UploadUtil.SendResp(_ws, Resp.Ok().WithValueLong(curSliceCount));
-                        curSliceCount = 0;
-                    }
-                    
+                    bytesReceived += result.Count;
+
+
+                    await UploadUtil.SendResp(_ws, Resp.Ok().WithValueLong(result.Count));
+
+
                     _writer.Process(new ArraySegment<byte>(buf, 0, result.Count));
                 }
             } catch (Exception e) {

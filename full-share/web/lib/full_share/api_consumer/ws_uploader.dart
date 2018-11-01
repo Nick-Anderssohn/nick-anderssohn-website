@@ -127,12 +127,11 @@ class WsUploader extends SubCleaner {
           _downloadLinkCompleter.complete(link);
           cleanup();
         }
-      } else {
+      } else if (_bytesHandledByServer % _sliceSize == 0) {
         _sendNextFileSlice();
       }
       onProgress?.call(_bytesHandledByServer / _file.size * 100.0);
     } else {
-      print(serverResponse);
       cleanup();
       onErrorMsg?.call(serverResponse);
     }
@@ -169,7 +168,8 @@ class _UploadRespParseUtil {
 
   static String getMessage(Map serverResponse) => parseJsonFromKey(serverResponse, messageKey);
 
-  static int getValueLongWithDefault(Map serverResponse, int defaultValue) => parseJsonFromKeyWithDefault(serverResponse, valueLongKey, defaultValue);
+  static int getValueLongWithDefault(Map serverResponse, int defaultValue) =>
+      parseJsonFromKeyWithDefault(serverResponse, valueLongKey, defaultValue);
 }
 
 /// Contains status codes used in responses from the server
