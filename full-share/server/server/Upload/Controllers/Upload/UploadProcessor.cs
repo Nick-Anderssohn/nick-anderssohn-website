@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Net.WebSockets;
 using System.Threading;
@@ -28,14 +30,26 @@ namespace server.Upload.Controllers.Upload {
         }
 
         public async Task Run() {
+            
+            long expectedMaxSliceSize = 1024 * 1024 * 5; // CRITICAL that this value matches what the client sends
+            long curSliceCount = 0;
+            
             try {
                 _writer.RunAsync();
                 for (int bytesReceived = 0; bytesReceived < _targetFileSize;) {
                     var buf = new byte[1024 * 128]; // 128 KiB
+
                     WebSocketReceiveResult result =
                         await _ws.ReceiveAsync(new ArraySegment<byte>(buf), CancellationToken.None);
-                    await UploadUtil.SendResp(_ws, Resp.Ok().WithValueLong(result.Count));
+                    
                     bytesReceived += result.Count;
+                    curSliceCount += result.Count;
+
+                    if (curSliceCount >= expectedMaxSliceSize) {
+                        await UploadUtil.SendResp(_ws, Resp.Ok().WithValueLong(curSliceCount));
+                        curSliceCount = 0;
+                    }
+                    
                     _writer.Process(new ArraySegment<byte>(buf, 0, result.Count));
                 }
             } catch (Exception e) {
@@ -63,11 +77,13 @@ namespace server.Upload.Controllers.Upload {
 
         private async Task HandleSuccess() {
             await UploadUtil.SendResp(_ws, Resp.Ok(MakeDownloadUrl()));
+            Log.Information("Closing socket");
             await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Success", CancellationToken.None);
         }
 
         private async Task HandleUnknownFailure() {
             await UploadUtil.SendResp(_ws, Resp.InternalError());
+            Log.Information("Closing socket");
             await _ws.CloseAsync(WebSocketCloseStatus.InternalServerError, "Unknown Error", CancellationToken.None);
         }
 
