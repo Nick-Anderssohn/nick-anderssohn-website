@@ -1,7 +1,0 @@
-{
-    "Username": "postgres",
-    "Password": "123",
-    "DbName": "full_share",
-    "PostgresPassword": "123",
-    "Host": "file-db"
-}
