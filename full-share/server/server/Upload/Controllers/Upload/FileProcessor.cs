@@ -57,7 +57,10 @@ namespace server.Upload.Controllers.Upload {
 
         private async void Finish(bool success) {
             try {
-                if (_ws.State != WebSocketState.Open) { }
+                if (_ws.State != WebSocketState.Open) {
+                    Log.Warning("Websocket closed prematurely.");
+                    return;
+                }
 
                 if (success) {
                     await HandleSuccess();
