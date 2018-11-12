@@ -47,6 +47,7 @@ services:
     - discovery.type=single-node
 #    volumes:
 #    - elasticsearch-volume:/usr/share/elasticsearch/data
+    restart: always
 
   kibana:
     image: docker.elastic.co/kibana/kibana:6.4.3
@@ -54,8 +55,28 @@ services:
     - '5601:5601'
     depends_on:
     - elasticsearch
+    restart: always
+#    environment:
+#    - SERVER_BASEPATH=/ops/Kibana
+#    - SERVER_REWRITEBASEPATH=true
+
+  ops-gateway:
+    image: 'ops-gateway'
+    build: 'ops-gateway/.'
+    restart: always
+    environment:
+    - LOGIN_PAGE_URL=https://localhost:8080/ops/
+
+  ops-db:
+    image: 'postgres:10.5'
+    environment:
+      POSTGRES_PASSWORD: 123
+    #    volumes:
+    #      - ops-db:/var/lib/postgresql/data
+    restart: always
 
 volumes:
   download-volume:
+#  ops-db:
   #  full-share-file-db:
 #  elasticsearch-volume:

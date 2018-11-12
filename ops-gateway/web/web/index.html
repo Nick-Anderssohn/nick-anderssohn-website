@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title >Nick Ops</title>
+    <meta charset="utf-8"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
+    <script defer src="main.dart.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <style>
+        .middle {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            width: 400px;
+        }
+
+        ::-webkit-input-placeholder { /* Chrome/Opera/Safari */
+            color: #0d47a1;
+        }
+        ::-moz-placeholder { /* Firefox 19+ */
+            color: #0d47a1;
+        }
+        :-ms-input-placeholder { /* IE 10+ */
+            color: #0d47a1;
+        }
+        :-moz-placeholder { /* Firefox 18- */
+            color: #0d47a1;
+        }
+    </style>
+</head>
+<body class="no-select body">
+<nav>
+    <div class="blue nav-wrapper">
+        <div class="col s12">
+            <a href="/" class="breadcrumb" style="margin-left: 5px;">Nick Ops</a>
+        </div>
+    </div>
+</nav>
+<div class="middle">
+    <div id="login-container">
+        <div class="row">
+            <div class="input-field col s12">
+                <input id="username" type="text" class="validate" placeholder="User Name">
+            </div>
+        </div>
+        <div class="row">
+            <div class="input-field col s12">
+                <input id="password" type="password" class="validate" placeholder="Password">
+            </div>
+        </div>
+        <a id="login-btn" class="waves-effect waves-light btn-large">Login</a>
+    </div>
+</div>
+</body>
+</html>
