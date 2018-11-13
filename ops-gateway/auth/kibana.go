@@ -13,7 +13,7 @@ import (
 )
 
 var KibanaEndpoint = &serverutil.Endpoint{
-	Path: "/Kibana",
+	Path: "/",
 	HandleFunc: handleKibana,
 }
 
@@ -22,24 +22,22 @@ var kibanaUrl *url.URL
 var loginPageUrl string
 
 func init() {
-	log.Println("init kibana url")
-	kibanaUrl, _ = url.Parse("http://localhost:5601/app/kibana")
-	log.Println("init kibana reverse proxy")
+	kibanaUrl, _ = url.Parse("http://kibana:5601")
 	kibanaReverseProxy = httputil.NewSingleHostReverseProxy(kibanaUrl)
-	kibanaReverseProxy.Director = func(req *http.Request) {
-		req.URL.Scheme = kibanaUrl.Scheme
-		req.URL.Host = kibanaUrl.Host
-		req.URL.Path = strings.Replace(singleJoiningSlash(kibanaUrl.Path, req.URL.Path), "/ops/Kibana", "", 1)
-		if kibanaUrl.RawQuery == "" || req.URL.RawQuery == "" {
-			req.URL.RawQuery = kibanaUrl.RawQuery + req.URL.RawQuery
-		} else {
-			req.URL.RawQuery = kibanaUrl.RawQuery + "&" + req.URL.RawQuery
-		}
-		if _, ok := req.Header["User-Agent"]; !ok {
-			// explicitly disable User-Agent so it's not set to default value
-			req.Header.Set("User-Agent", "")
-		}
-	}
+	//kibanaReverseProxy.Director = func(req *http.Request) {
+	//	req.URL.Scheme = kibanaUrl.Scheme
+	//	req.URL.Host = kibanaUrl.Host
+	//	req.URL.Path = strings.Replace(singleJoiningSlash(kibanaUrl.Path, req.URL.Path), "/Kibana", "/", 1)
+	//	if kibanaUrl.RawQuery == "" || req.URL.RawQuery == "" {
+	//		req.URL.RawQuery = kibanaUrl.RawQuery + req.URL.RawQuery
+	//	} else {
+	//		req.URL.RawQuery = kibanaUrl.RawQuery + "&" + req.URL.RawQuery
+	//	}
+	//	if _, ok := req.Header["User-Agent"]; !ok {
+	//		// explicitly disable User-Agent so it's not set to default value
+	//		req.Header.Set("User-Agent", "")
+	//	}
+	//}
 	loginPageUrl = os.Getenv("LOGIN_PAGE_URL")
 }
 

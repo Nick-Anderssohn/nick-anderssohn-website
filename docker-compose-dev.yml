@@ -14,6 +14,7 @@ services:
     depends_on:
     - file-db
     - elasticsearch
+    - kibana
     build: 'full-share/server/server/.'
     image: 'full-share-file-manager'
     volumes:
@@ -33,6 +34,7 @@ services:
     volumes:
     - ./full-share/web/build:/usr/share/nginx/html:ro
     - download-volume:/full-share/download:ro
+    - ./full-share/nginx/kibana-creds:/full-share/kibana-creds:ro
     ports:
     - '8080:443'
     restart: always
@@ -50,33 +52,15 @@ services:
     restart: always
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:6.4.3
+    image: nick-kibana
+    build: 'kibana/.'
     ports:
     - '5601:5601'
     depends_on:
     - elasticsearch
     restart: always
-#    environment:
-#    - SERVER_BASEPATH=/ops/Kibana
-#    - SERVER_REWRITEBASEPATH=true
-
-  ops-gateway:
-    image: 'ops-gateway'
-    build: 'ops-gateway/.'
-    restart: always
-    environment:
-    - LOGIN_PAGE_URL=https://localhost:8080/ops/
-
-  ops-db:
-    image: 'postgres:10.5'
-    environment:
-      POSTGRES_PASSWORD: 123
-    #    volumes:
-    #      - ops-db:/var/lib/postgresql/data
-    restart: always
 
 volumes:
   download-volume:
-#  ops-db:
   #  full-share-file-db:
 #  elasticsearch-volume:

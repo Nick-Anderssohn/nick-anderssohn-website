@@ -1,3 +1,4 @@
+# UNUSED
 Example admin.json:
 ```
 {
