@@ -32,7 +32,7 @@ services:
     - download-volume:/full-share/download:ro
     - /etc/letsencrypt:/etc/letsencrypt:ro
     - /var/lib/letsencrypt:/var/lib/letsencrypt:ro
-    - /kibana-creds:/full-share/kibana-creds:ro
+    - ${HOME}/kibana-creds:/full-share/kibana-creds:ro
     ports:
     - '80:80'
     - '443:443'
