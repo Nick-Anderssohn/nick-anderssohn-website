@@ -46,6 +46,7 @@ services:
     - discovery.type=single-node
     volumes:
     - elasticsearch-volume:/usr/share/elasticsearch/data
+    restart: always
 
   kibana:
     image: nick-kibana
