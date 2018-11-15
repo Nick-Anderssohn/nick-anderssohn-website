@@ -30,8 +30,10 @@ namespace server.Upload.Controllers.Upload {
         {
             "StatusCode": 200,
             "StatusMsg": "Ok",
-            "Message": ""
+            "Message": "",
+            "ValueLong": 123
         }
+        Where "ValueLong" is bytes handled by the server.
     Then the server will finish up with:
         {
             "StatusCode": 200,
@@ -59,13 +61,13 @@ namespace server.Upload.Controllers.Upload {
                     BadRequest();
                     return;
                 }
-
+                
                 WebSocket ws = await HttpContext.WebSockets.AcceptWebSocketAsync();
                 SetupMsg setupMsg = await Setup(ws);
                 FileProcessor processor = new FileProcessor(ws, setupMsg.FileSize, setupMsg.Code, setupMsg.FileName);
                 await processor.Run();
             } catch (Exception e) {
-                Log.Error("Upload failed {exception}", e);
+                Log.Error("Upload failed: {exception}", e);
             }
         }
 

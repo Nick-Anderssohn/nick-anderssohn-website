@@ -39,7 +39,7 @@ namespace server.Upload.Controllers.Upload {
                         await _ws.ReceiveAsync(new ArraySegment<byte>(buf), CancellationToken.None);
 
                     bytesReceived += result.Count;
-
+                    
 
                     await UploadUtil.SendResp(_ws, Resp.Ok().WithValueLong(result.Count));
 
@@ -47,9 +47,8 @@ namespace server.Upload.Controllers.Upload {
                     _writer.Process(new ArraySegment<byte>(buf, 0, result.Count));
                 }
             } catch (Exception e) {
+                Log.Error("Error while processing file: {exception}", e);
                 _writer.Cancel();
-                Log.Error("could not process file {exception}", e);
-                Finish(false);
             }
 
             _sentFinalResponseNotification.WaitOne();
@@ -58,17 +57,18 @@ namespace server.Upload.Controllers.Upload {
         private async void Finish(bool success) {
             try {
                 if (_ws.State != WebSocketState.Open) {
-                    Log.Warning("Websocket closed prematurely.");
+                    Log.Information("Upload failed.");
                     return;
                 }
 
                 if (success) {
                     await HandleSuccess();
                 } else {
+                    Log.Information("Upload failed.");
                     await HandleUnknownFailure();
                 }
             } catch (Exception e) {
-                Log.Error("Could not finish: {error}", e);
+                Log.Error("Error while finishing upload: {exception}", e);
             } finally {
                 _sentFinalResponseNotification.Set();
             }
@@ -76,13 +76,12 @@ namespace server.Upload.Controllers.Upload {
 
         private async Task HandleSuccess() {
             await UploadUtil.SendResp(_ws, Resp.Ok(MakeDownloadUrl()));
-            Log.Information("Closing websocket");
+            Log.Information("Upload succeeded.");
             await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Success", CancellationToken.None);
         }
 
         private async Task HandleUnknownFailure() {
             await UploadUtil.SendResp(_ws, Resp.InternalError());
-            Log.Information("Closing websocket");
             await _ws.CloseAsync(WebSocketCloseStatus.InternalServerError, "Unknown Error", CancellationToken.None);
         }
 

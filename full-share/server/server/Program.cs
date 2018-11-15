@@ -13,7 +13,6 @@ namespace server {
             WebHost.CreateDefaultBuilder(args)
                 .UseUrls("http://0.0.0.0:8080")
                 .UseKestrel()
-                .UseIISIntegration() // should I be using this?
                 .UseStartup<Startup>();
     }
 }

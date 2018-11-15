@@ -17,7 +17,8 @@ namespace server {
                 .MinimumLevel.Information()
                 .WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri("http://elasticsearch:9200")) {
                     AutoRegisterTemplate = true,
-                    AutoRegisterTemplateVersion = AutoRegisterTemplateVersion.ESv6
+                    AutoRegisterTemplateVersion = AutoRegisterTemplateVersion.ESv6,
+                    CustomFormatter = new ExceptionAsObjectJsonFormatter(renderMessage: true)
                 })
                 .CreateLogger();
 

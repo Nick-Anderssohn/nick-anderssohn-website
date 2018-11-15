@@ -7,7 +7,7 @@ namespace server.Upload.Controllers.Upload {
         public string Message { get; set; } = "";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public long? ValueLong { get; set; } = null;
+        public long? ValueLong { get; set; }
 
         public static Resp BadRequest() {
             return new Resp {

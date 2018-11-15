@@ -38,7 +38,6 @@ namespace server.Upload.Concurrency {
                     while (bytesWritten < _targetFileSize) {
                         CancelableValue<ArraySegment<byte>> nextProcessMsg = _fileSlices.Take();
                         if (nextProcessMsg.Cancel) {
-                            Log.Information("Write process was canceled");
                             // Todo: remove partial file
                             return;
                         }
@@ -51,7 +50,7 @@ namespace server.Upload.Concurrency {
                     success = bytesWritten == _targetFileSize;
                 }
             } catch (Exception e) {
-                Log.Error("could not write file {exception}", e);
+                Log.Error("Could not write file: {exception}", e);
             } finally {
                 _runFinally?.Invoke(success);
             }
