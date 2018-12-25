@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title >Full Share</title>
+    <meta charset="utf-8"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="styles/main.css">
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
+    <script defer src="main.dart.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+</head>
+<body class="no-select body">
+<input id="file-input" type="file" style="display:none;"/>
+<nav>
+    <div class="blue nav-wrapper">
+        <div class="col s12">
+            <a href="/" class="breadcrumb" style="margin-left: 5px;">Full Share</a>
+        </div>
+    </div>
+</nav>
+<div class="middle">
+    <p>Note: Download links expire after 2 days.</p>
+    <a id="share-btn" class="waves-effect waves-light btn-large"><i class="material-icons left">file_upload</i>Share File</a>
+    <div style="height: 10px;"></div>
+    <div id="prog-container" style="display: none;">
+        <p id="uploading-msg">Uploading...</p>
+        <div class="progress">
+            <div id="prog-bar" class="indeterminate"></div>
+        </div>
+    </div>
+    <div id="successful-container" style="display: none;">
+        <p>Success! Upload link:</p>
+        <p id="link">Test link</p>
+        <a id="copy-btn" class="waves-effect waves-light btn-large"><i class="material-icons left">content_copy</i>Copy</a>
+        <a id="send-btn" class="waves-effect waves-light btn-large"><i class="material-icons left">send</i>Send</a>
+    </div>
+</div>
+</body>
+</html>
