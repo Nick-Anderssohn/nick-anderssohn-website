@@ -52,12 +52,12 @@ class WsUploader extends SubCleaner {
 
   /// Create a [WsUploader] set to read and upload [_file].
   WsUploader.fromFile(this._file, {this.onErrorMsg, this.onProgress}) {
-    if (_file.size > maxFileSize) {
-      throw LeveledException.Warning('file too large')
-        ..attachedStackTrace = StackTrace.current
-        ..userFacingMessage =
-            'File too large. Provided file size: ${_file.size} bytes. Max file size: ${maxFileSize} bytes.';
-    }
+//    if (_file.size > maxFileSize) {
+//      throw LeveledException.Warning('file too large')
+//        ..attachedStackTrace = StackTrace.current
+//        ..userFacingMessage =
+//            'File too large. Provided file size: ${_file.size} bytes. Max file size: ${maxFileSize} bytes.';
+//    }
 
     String url = '';
     if (window.location.protocol == 'https:') {
