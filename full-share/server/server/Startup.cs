@@ -6,7 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using server.Upload.Db;
 using server.Upload.Reaper;
 using Serilog;
-using Serilog.Sinks.Elasticsearch;
 
 namespace server {
     public class Startup {
@@ -15,11 +14,12 @@ namespace server {
         static Startup() {
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
-                .WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri("http://elasticsearch:9200")) {
-                    AutoRegisterTemplate = true,
-                    AutoRegisterTemplateVersion = AutoRegisterTemplateVersion.ESv6,
-                    CustomFormatter = new ExceptionAsObjectJsonFormatter(renderMessage: true)
-                })
+//                .WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri("http://elasticsearch:9200")) {
+//                    AutoRegisterTemplate = true,
+//                    AutoRegisterTemplateVersion = AutoRegisterTemplateVersion.ESv6,
+//                    CustomFormatter = new ExceptionAsObjectJsonFormatter(renderMessage: true)
+//                })
+                .WriteTo.Console()
                 .CreateLogger();
 
             DbStaticInitializer.SetupDb();
